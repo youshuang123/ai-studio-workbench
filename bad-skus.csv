@@ -1,0 +1,5 @@
+sku_code,product_name,category,color,selling_points,image_file
+A-1,正常杯子,家居,白,,
+A-1,重复编码,家居,白,,
+A-3,,家居,白,,
+A-4,缺图商品,家居,白,,not-exist.png

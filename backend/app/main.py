@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config
@@ -65,6 +66,11 @@ app.include_router(projects.router)
 app.include_router(assets.router)
 app.include_router(generations.router)
 app.include_router(batches.router)
+
+# 本地静态产物（视频切片预览等），仅本机调试用
+_STATIC_DIR = config.BACKEND_DIR / "static"
+if _STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 
 @app.get("/api/health")
