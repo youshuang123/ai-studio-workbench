@@ -1,0 +1,76 @@
+verify.sh 自检  2026-10-23 00:27:39  目录：/Users/youshuang/Documents/project/项目1
+
+================ 1. mock 自动化测试 ================
+.........................................                                [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /Users/youshuang/Documents/project/项目1/backend/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+41 passed, 1 warning in 0.42s
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.mts:14:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.5 /Users/youshuang/Documents/project/项目1/frontend
+
+
+ Test Files  4 passed (4)
+      Tests  19 passed (19)
+   Start at  00:27:40
+   Duration  591ms (environment 83%, setup 10%, tests 4%, import 2%, transform 1%)
+
+结果：通过（41/41）；前端测试通过
+
+================ 2. 密钥排除（扫描 git 跟踪文件与构建产物） ================
+通过：没有 .env 文件被 git 跟踪。
+通过：会进仓库的文件中未发现密钥样式字符串。
+通过：构建产物 frontend/.next 未发现密钥样式字符串。
+结果：通过
+
+================ 3. 数据重启恢复（调用 scripts/restart-check.sh） ================
+第一次启动：服务已就绪
+第一次启动：已写入项目 id=d380fb00-e2e3-45bb-ab66-e537cd9b5d4b 资产 id=3bc50bf8-9a08-43ab-ae1b-b5929c2dcd31
+服务已停止。
+第二次启动：读回同一条项目记录，资产文件可访问（HTTP 200）。重启恢复通过。
+结果：通过
+
+================ 4. 前端类型检查 / Lint / 生产构建 ================
+
+> ai-studio-web@0.2.1 lint
+> eslint .
+
+
+> ai-studio-web@0.2.1 build
+> next build
+
+▲ Next.js 16.4.2 (Turbopack)
+✓ Running next.config.ts took 40ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 134ms
+  Running TypeScript ...
+  Finished TypeScript in 526ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/3) ...
+✓ Generating static pages using 5 workers (3/3) in 171ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /projects/[id]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+结果：通过
+
+================ 汇总（抄进是否表的就是这四行） ================
+是否表第 2 项  mock 测试：      通过（41/41）；前端测试通过
+是否表第 4 项  前端检查与构建： 通过
+是否表第 5 项  密钥排除：       通过
+是否表第 6 项  重启后数据恢复： 通过
+总判定：四项全部通过或不适用。

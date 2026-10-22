@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #fafafa;
+  --color-surface: #ffffff;
+  --color-ink: #111827;
+  --color-smoke: #6b7280;
+  --color-line: #e5e7eb;
+  --color-accent: #2563eb;
+  --color-accent-soft: #eff4ff;
+  --color-success: #15803d;
+  --color-success-soft: #f0fdf4;
+  --color-warn: #b45309;
+  --color-warn-soft: #fffbeb;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fef2f2;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+}
+
+/* 移动端禁止横向滚动（验收项） */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

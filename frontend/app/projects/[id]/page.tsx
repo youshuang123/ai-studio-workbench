@@ -1,0 +1,354 @@
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { Button, buttonClass } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Divider } from "@/components/ui/Divider";
+import { StatusTag } from "@/components/ui/StatusTag";
+import {
+  createGeneration,
+  fetchJob,
+  fetchProject,
+  fetchUsage,
+  retryJob,
+} from "@/features/api/client";
+import type { Asset, ProjectDetail, Usage } from "@/features/api/types";
+import { UploadBox } from "@/features/generation/components/UploadBox";
+import { ResultPanel } from "@/features/generation/components/ResultPanel";
+import { useJobEvents } from "@/features/jobs/useJobEvents";
+import { errorMessage } from "@/lib/api/client";
+import { formatFen, formatTime } from "@/lib/utils/format";
+
+type Form = {
+  product_name: string;
+  category: string;
+  selling_points: string;
+  color: string;
+};
+
+const EMPTY_FORM: Form = {
+  product_name: "",
+  category: "",
+  selling_points: "",
+  color: "",
+};
+
+export default function ProjectPage() {
+  const params = useParams<{ id: string }>();
+  const projectId = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? "");
+
+  const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [form, setForm] = useState<Form>(EMPTY_FORM);
+  const [sourceAssetId, setSourceAssetId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const [d, u] = await Promise.all([fetchProject(projectId), fetchUsage(projectId)]);
+      setDetail(d);
+      setUsage(u);
+      setLoadError(null);
+      const uploads = d.assets.filter((a) => a.kind === "upload");
+      setSourceAssetId((prev) => prev ?? uploads[0]?.id ?? null);
+    } catch (err) {
+      setLoadError(errorMessage(err));
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    // 首次加载数据。setState 发生在 await 之后（不是同步级联渲染）。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load]);
+
+  // 生成结束（成功或失败）后刷新项目与成本；回调在 SSE 事件里触发，不违反 setState 规则
+  const { stage, done, error: sseError, isWorking } = useJobEvents(jobId, load);
+
+  const uploads = useMemo(
+    () => (detail?.assets ?? []).filter((a) => a.kind === "upload"),
+    [detail],
+  );
+  const outputs = useMemo(
+    () => (detail?.assets ?? []).filter((a) => a.kind === "output"),
+    [detail],
+  );
+  const currentSource: Asset | null = useMemo(
+    () => uploads.find((a) => a.id === sourceAssetId) ?? uploads[0] ?? null,
+    [uploads, sourceAssetId],
+  );
+
+  async function handleGenerate() {
+    if (!currentSource || submitting) return;
+    setFormError(null);
+    if (!form.product_name.trim()) {
+      setFormError("商品名称必填");
+      return;
+    }
+    setSubmitting(true);
+    setJobId(null);
+    try {
+      const resp = await createGeneration(projectId, {
+        source_asset_id: currentSource.id,
+        product_name: form.product_name.trim(),
+        category: form.category.trim(),
+        selling_points: form.selling_points.trim(),
+        color: form.color.trim(),
+      });
+      setJobId(resp.job_id);
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRetry() {
+    if (!jobId || retrying) return;
+    setRetrying(true);
+    try {
+      const resp = await retryJob(jobId);
+      // 重新建连：先清空再置为新 job
+      setJobId(null);
+      await Promise.resolve();
+      setJobId(resp.job_id);
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setRetrying(false);
+    }
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Link href="/" className="text-sm text-accent hover:underline">
+          ← 返回项目列表
+        </Link>
+        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+          {loadError}
+        </div>
+        <Button variant="secondary" onClick={() => void load()}>
+          重试
+        </Button>
+      </div>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="h-4 w-24 animate-pulse rounded bg-line/60" />
+        <div className="h-8 w-1/3 animate-pulse rounded bg-line/60" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="h-64 animate-pulse rounded-xl bg-line/60" />
+          <div className="h-64 animate-pulse rounded-xl bg-line/60" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-3">
+        <Link href="/" className="text-sm text-accent hover:underline">
+          ← 返回项目列表
+        </Link>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight text-ink md:text-2xl">
+              {detail.name}
+            </h1>
+            <p className="mt-1 text-xs text-smoke">
+              创建于 {formatTime(detail.created_at)} · {detail.assets.length} 个素材
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-smoke">累计成本</p>
+            <p className="text-lg font-medium text-ink">
+              {formatFen(usage?.total_fen ?? 0)}
+            </p>
+            <p className="text-xs text-smoke">{usage?.images ?? 0} 张</p>
+          </div>
+        </div>
+      </header>
+
+      <Divider />
+
+      <div className="grid gap-6 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)] md:items-start">
+        <Card className="flex flex-col gap-5">
+          <UploadBox
+            projectId={projectId}
+            asset={currentSource}
+            onUploaded={(asset) => {
+              setSourceAssetId(asset.id);
+              void load();
+            }}
+          />
+
+          <Divider />
+
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-medium text-ink">2. 商品信息</h3>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-smoke">
+                商品名称 <span className="text-danger">*</span>
+              </span>
+              <input
+                value={form.product_name}
+                onChange={(e) => setForm({ ...form, product_name: e.target.value })}
+                placeholder="例如：316 不锈钢保温杯"
+                maxLength={50}
+                className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-smoke">类目</span>
+                <input
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  placeholder="家居"
+                  maxLength={50}
+                  className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-smoke">主色</span>
+                <input
+                  value={form.color}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  placeholder="雾霾蓝"
+                  maxLength={20}
+                  className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                />
+              </label>
+            </div>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-smoke">卖点</span>
+              <textarea
+                value={form.selling_points}
+                onChange={(e) => setForm({ ...form, selling_points: e.target.value })}
+                placeholder="24 小时保温，316 不锈钢内胆"
+                maxLength={200}
+                rows={2}
+                className="resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+              />
+            </label>
+
+            {formError && (
+              <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+                {formError}
+              </div>
+            )}
+
+            <Button
+              onClick={handleGenerate}
+              loading={submitting}
+              disabled={!currentSource || isWorking}
+              className="w-full"
+            >
+              {isWorking ? "生成中…" : "生成主图"}
+            </Button>
+            {!currentSource && (
+              <p className="text-xs text-smoke">先上传商品图才能生成。</p>
+            )}
+          </div>
+        </Card>
+
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-ink">3. 生成结果</h3>
+            {isWorking && <StatusTag status="running" />}
+          </div>
+          <ResultPanel
+            stage={stage}
+            done={done}
+            error={sseError}
+            isWorking={isWorking}
+            onRetry={handleRetry}
+            retrying={retrying}
+          />
+        </Card>
+      </div>
+
+      {(outputs.length > 0 || detail.recent_jobs.length > 0) && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-smoke">历史</h2>
+
+          {outputs.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {outputs.slice(0, 10).map((a) => (
+                <a
+                  key={a.id}
+                  href={a.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group block overflow-hidden rounded-lg border border-line bg-surface"
+                >
+                  <img
+                    src={a.url}
+                    alt={a.filename}
+                    className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </a>
+              ))}
+            </div>
+          )}
+
+          {detail.recent_jobs.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-line bg-surface">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-canvas text-xs text-smoke">
+                  <tr>
+                    <th className="px-3 py-2 font-normal">商品</th>
+                    <th className="px-3 py-2 font-normal">状态</th>
+                    <th className="px-3 py-2 font-normal">成本</th>
+                    <th className="px-3 py-2 font-normal">时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.recent_jobs.map((job) => (
+                    <tr key={job.id} className="border-t border-line">
+                      <td className="max-w-[10rem] truncate px-3 py-2 text-ink">
+                        {job.product_name || "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusTag status={job.status} />
+                      </td>
+                      <td className="px-3 py-2 text-smoke">{formatFen(job.cost_fen)}</td>
+                      <td className="px-3 py-2 text-xs text-smoke">
+                        {formatTime(job.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      <footer className="pt-2 text-xs text-smoke">
+        <span>阶段 2-1 · 单张主图端到端</span>
+        {" · "}
+        <Link href="/" className={buttonClass("ghost", "px-0 py-0 text-xs")}>
+          返回列表
+        </Link>
+      </footer>
+    </div>
+  );
+}
