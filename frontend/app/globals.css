@@ -1,19 +1,61 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   Portrait 风格 token（来源：docs/设计参考/DESIGN.md）
+   规则：单一墨色 + 单一彩虹；彩虹每视图最多两处（CTA 描边 / logo 方块）
+   ───────────────────────────────────────────────────────────── */
 @theme {
-  --color-canvas: #fafafa;
-  --color-surface: #ffffff;
-  --color-ink: #111827;
-  --color-smoke: #6b7280;
-  --color-line: #e5e7eb;
-  --color-accent: #2563eb;
-  --color-accent-soft: #eff4ff;
-  --color-success: #15803d;
-  --color-success-soft: #f0fdf4;
-  --color-warn: #b45309;
-  --color-warn-soft: #fffbeb;
-  --color-danger: #b91c1c;
-  --color-danger-soft: #fef2f2;
+  /* Colors */
+  --color-ink: #08304c;
+  --color-teal: #084e72;
+  --color-outline: #353535;
+  --color-body: #2c2c2c;
+  --color-helper: #797979;
+  --color-quiet: #585858;
+  --color-divider: #dedede;
+  --color-fog: #c7c7c7;
+  --color-hairline: #eeeeee;
+  --color-canvas: #ffffff;
+
+  --color-mint: #d7ffe2;
+  --color-sky: #e8f1ff;
+  --color-peach: #ffebd6;
+  --color-blush: #ffe4e2;
+
+  /* Typography */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+
+  /* Radius */
+  --radius-card: 24px;
+  --radius-button: 28px;
+  --radius-input: 16px;
+  --radius-nav: 28px;
+  --radius-chip: 9999px;
+
+  /* Shadows — 最重不超过 8% 黑 */
+  --shadow-subtle:
+    0 0 0 1px rgb(0 0 0 / 0.04), 0 16px 16px -8px rgb(0 0 0 / 0.03),
+    0 10px 10px -5px rgb(0 0 0 / 0.03), 0 5px 5px -2.5px rgb(0 0 0 / 0.03),
+    0 3px 3px -1.5px rgb(0 0 0 / 0.03), 0 2px 2px -1px rgb(0 0 0 / 0.03),
+    0 1px 1px -0.5px rgb(0 0 0 / 0.03);
+  --shadow-nav:
+    0 16px 16px -8px rgb(0 0 0 / 0.03), 0 10px 10px -5px rgb(0 0 0 / 0.03),
+    0 5px 5px -2.5px rgb(0 0 0 / 0.03), 0 3px 3px -1.5px rgb(0 0 0 / 0.03),
+    0 2px 2px -1px rgb(0 0 0 / 0.03), 0 1px 1px -0.5px rgb(0 0 0 / 0.03);
+}
+
+:root {
+  --gradient-rainbow: linear-gradient(
+    90deg,
+    #26c0ff,
+    #e600c2 20%,
+    #ff4940 40%,
+    #ffa130 60%,
+    #ffc837 80%,
+    #00cc3d
+  );
 }
 
 html,
@@ -21,22 +63,89 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
-}
-
-body {
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
-}
-
-/* 移动端禁止横向滚动（验收项） */
-html,
-body {
   max-width: 100%;
   overflow-x: hidden;
 }
 
+body {
+  font-family: var(--font-sans);
+  letter-spacing: 0.025em;
+  line-height: 1.5;
+}
+
+/* 展示标题：紧字距是这套设计的灵魂（DESIGN.md: -0.056em ~ -0.013em） */
+.display-tight {
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-weight: 600;
+}
+
+.display-tighter {
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-weight: 600;
+}
+
+/* 彩虹描边：用双层背景实现 1.5px 渐变边框 */
+.rainbow-ring {
+  position: relative;
+  background: var(--color-canvas);
+  border-radius: var(--radius-button);
+}
+.rainbow-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--gradient-rainbow);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 品牌方块：12px 彩虹 */
+.rainbow-square {
+  background: var(--gradient-rainbow);
+  border-radius: 3px;
+}
+
+/* 彩虹斜体词（每视图最多一个） */
+.rainbow-text {
+  background: var(--gradient-rainbow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 状态胶囊：大写小字 + 0.14em 字距 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-chip);
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+/* 滚动条收细，避免打断纸面感 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-divider);
+  border-radius: 9999px;
+  border: 3px solid var(--color-canvas);
 }

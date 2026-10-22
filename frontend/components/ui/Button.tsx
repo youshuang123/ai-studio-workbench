@@ -1,17 +1,27 @@
 import type { ButtonHTMLAttributes } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+/**
+ * Portrait 风格按钮
+ * - rainbow：主 CTA，1.5px 彩虹渐变描边（每视图最多一个）
+ * - ghost：次级动作，纯文字
+ * - quiet：轻描边，用于表单内的小动作
+ */
+export type ButtonVariant = "rainbow" | "outline" | "ghost" | "quiet";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 text-[15px] font-medium tracking-[0.01em] transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-white hover:bg-blue-700",
-  secondary: "border border-line bg-surface text-ink hover:bg-canvas",
-  ghost: "text-smoke hover:bg-canvas hover:text-ink",
+  rainbow:
+    "rainbow-ring px-6 py-3 text-ink hover:-translate-y-px hover:shadow-[0_6px_18px_-10px_rgba(8,48,76,0.35)]",
+  outline:
+    "rounded-[28px] border border-ink px-6 py-3 text-ink hover:bg-ink hover:text-canvas",
+  ghost: "px-2 py-2 text-ink hover:text-teal underline-offset-4 hover:underline",
+  quiet:
+    "rounded-[16px] border border-divider bg-canvas px-3 py-2 text-[13px] text-ink hover:border-ink/30",
 };
 
-export function buttonClass(variant: ButtonVariant = "primary", extra = ""): string {
+export function buttonClass(variant: ButtonVariant = "rainbow", extra = ""): string {
   return `${BASE} ${VARIANTS[variant]} ${extra}`.trim();
 }
 
@@ -21,7 +31,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export function Button({
-  variant = "primary",
+  variant = "rainbow",
   loading = false,
   className = "",
   children,

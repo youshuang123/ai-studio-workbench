@@ -1,22 +1,20 @@
 import { jobStateLabel, mapJobStatus } from "@/features/jobs/status";
 
+/**
+ * 状态胶囊：pastel 底 + 深色文字 + 大写小字（DESIGN.md Eyebrow Label Pill）
+ * 失败/超预算从彩虹谱里取一色做 12% 调浅，不新增色相。
+ */
 const STYLES: Record<string, string> = {
-  waiting: "bg-canvas text-smoke border-line",
-  generating: "bg-accent-soft text-accent border-accent/30",
-  success: "bg-success-soft text-success border-success/30",
-  error: "bg-danger-soft text-danger border-danger/30",
-  blocked: "bg-warn-soft text-warn border-warn/30",
-  cancelled: "bg-canvas text-smoke border-line",
-  stale: "bg-canvas text-smoke border-line",
+  waiting: "bg-hairline text-helper",
+  generating: "bg-sky text-teal",
+  success: "bg-mint text-ink",
+  error: "bg-blush text-[#8c2b25]",
+  blocked: "bg-peach text-[#8a4b12]",
+  cancelled: "bg-hairline text-helper",
+  stale: "bg-hairline text-quiet",
 };
 
 export function StatusTag({ status }: { status: string | null | undefined }) {
   const state = mapJobStatus(status);
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${STYLES[state]}`}
-    >
-      {jobStateLabel(state)}
-    </span>
-  );
+  return <span className={`chip ${STYLES[state]}`}>{jobStateLabel(state)}</span>;
 }

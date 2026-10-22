@@ -4,13 +4,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button, buttonClass } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Divider } from "@/components/ui/Divider";
+import { Button } from "@/components/ui/Button";
+import { Card, Eyebrow } from "@/components/ui/Card";
 import { StatusTag } from "@/components/ui/StatusTag";
 import {
   createGeneration,
-  fetchJob,
   fetchProject,
   fetchUsage,
   retryJob,
@@ -35,6 +33,9 @@ const EMPTY_FORM: Form = {
   selling_points: "",
   color: "",
 };
+
+const inputClass =
+  "rounded-[16px] border border-divider bg-canvas px-4 py-2.5 text-[14px] text-ink outline-none placeholder:text-fog focus:border-ink";
 
 export default function ProjectPage() {
   const params = useParams<{ id: string }>();
@@ -67,12 +68,10 @@ export default function ProjectPage() {
   }, [projectId]);
 
   useEffect(() => {
-    // 首次加载数据。setState 发生在 await 之后（不是同步级联渲染）。
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
-  // 生成结束（成功或失败）后刷新项目与成本；回调在 SSE 事件里触发，不违反 setState 规则
   const { stage, done, error: sseError, isWorking } = useJobEvents(jobId, load);
 
   const uploads = useMemo(
@@ -83,6 +82,7 @@ export default function ProjectPage() {
     () => (detail?.assets ?? []).filter((a) => a.kind === "output"),
     [detail],
   );
+
   const latestSuccess = useMemo(() => {
     const job = detail?.recent_jobs.find(
       (j) => j.status === "succeeded" && j.output_asset_id,
@@ -130,7 +130,6 @@ export default function ProjectPage() {
     setRetrying(true);
     try {
       const resp = await retryJob(jobId);
-      // 重新建连：先清空再置为新 job
       setJobId(null);
       await Promise.resolve();
       setJobId(resp.job_id);
@@ -144,15 +143,17 @@ export default function ProjectPage() {
   if (loadError) {
     return (
       <div className="flex flex-col gap-4">
-        <Link href="/" className="text-sm text-accent hover:underline">
+        <Link href="/" className="text-[14px] text-teal hover:underline">
           ← 返回项目列表
         </Link>
-        <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+        <div className="rounded-[20px] bg-blush px-5 py-4 text-[14px] text-[#8c2b25]">
           {loadError}
         </div>
-        <Button variant="secondary" onClick={() => void load()}>
-          重试
-        </Button>
+        <div>
+          <Button variant="quiet" onClick={() => void load()}>
+            重试
+          </Button>
+        </div>
       </div>
     );
   }
@@ -160,45 +161,51 @@ export default function ProjectPage() {
   if (!detail) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="h-4 w-24 animate-pulse rounded bg-line/60" />
-        <div className="h-8 w-1/3 animate-pulse rounded bg-line/60" />
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="h-64 animate-pulse rounded-xl bg-line/60" />
-          <div className="h-64 animate-pulse rounded-xl bg-line/60" />
+        <div className="h-4 w-24 animate-pulse rounded bg-hairline" />
+        <div className="h-10 w-1/3 animate-pulse rounded bg-hairline" />
+        <div className="grid gap-6 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+          <div className="h-72 animate-pulse rounded-[24px] bg-hairline" />
+          <div className="h-72 animate-pulse rounded-[24px] bg-hairline" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
-        <Link href="/" className="text-sm text-accent hover:underline">
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-col gap-4">
+        <Link href="/" className="w-fit text-[13px] text-teal hover:underline">
           ← 返回项目列表
         </Link>
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight text-ink md:text-2xl">
+            <Eyebrow>项目</Eyebrow>
+            <h1 className="display-tight mt-1.5 truncate text-[30px] text-ink md:text-[36px]">
               {detail.name}
             </h1>
-            <p className="mt-1 text-xs text-smoke">
+            <p className="mt-2 text-[13px] text-helper">
               创建于 {formatTime(detail.created_at)} · {detail.assets.length} 个素材
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-smoke">累计成本</p>
-            <p className="text-lg font-medium text-ink">
-              {formatFen(usage?.total_fen ?? 0)}
-            </p>
-            <p className="text-xs text-smoke">{usage?.images ?? 0} 张</p>
+          <div className="flex gap-6">
+            <div>
+              <Eyebrow>累计成本</Eyebrow>
+              <p className="mt-1 text-[22px] font-medium tracking-[-0.02em] text-ink">
+                {formatFen(usage?.total_fen ?? 0)}
+              </p>
+            </div>
+            <div>
+              <Eyebrow>生成张数</Eyebrow>
+              <p className="mt-1 text-[22px] font-medium tracking-[-0.02em] text-ink">
+                {usage?.images ?? 0}
+              </p>
+            </div>
           </div>
         </div>
       </header>
 
-      <Divider />
-
-      <div className="grid gap-6 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)] md:items-start">
-        <Card className="flex flex-col gap-5">
+      <div className="grid gap-6 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] md:items-start">
+        <Card className="flex flex-col gap-6">
           <UploadBox
             projectId={projectId}
             asset={currentSource}
@@ -208,61 +215,61 @@ export default function ProjectPage() {
             }}
           />
 
-          <Divider />
+          <div className="border-t border-hairline" />
 
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-medium text-ink">2. 商品信息</h3>
+          <div className="flex flex-col gap-4">
+            <Eyebrow>02 · 商品信息</Eyebrow>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-smoke">
-                商品名称 <span className="text-danger">*</span>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[12px] text-helper">
+                商品名称 <span className="text-[#8c2b25]">*</span>
               </span>
               <input
                 value={form.product_name}
                 onChange={(e) => setForm({ ...form, product_name: e.target.value })}
                 placeholder="例如：316 不锈钢保温杯"
                 maxLength={50}
-                className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                className={inputClass}
               />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-smoke">类目</span>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12px] text-helper">类目</span>
                 <input
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   placeholder="家居"
                   maxLength={50}
-                  className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                  className={inputClass}
                 />
               </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-smoke">主色</span>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[12px] text-helper">主色</span>
                 <input
                   value={form.color}
                   onChange={(e) => setForm({ ...form, color: e.target.value })}
                   placeholder="雾霾蓝"
                   maxLength={20}
-                  className="rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                  className={inputClass}
                 />
               </label>
             </div>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-smoke">卖点</span>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[12px] text-helper">卖点</span>
               <textarea
                 value={form.selling_points}
                 onChange={(e) => setForm({ ...form, selling_points: e.target.value })}
                 placeholder="24 小时保温，316 不锈钢内胆"
                 maxLength={200}
                 rows={2}
-                className="resize-none rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                className={`resize-none ${inputClass}`}
               />
             </label>
 
             {formError && (
-              <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+              <div className="rounded-[16px] bg-blush px-4 py-3 text-[13px] text-[#8c2b25]">
                 {formError}
               </div>
             )}
@@ -276,14 +283,14 @@ export default function ProjectPage() {
               {isWorking ? "生成中…" : "生成主图"}
             </Button>
             {!currentSource && (
-              <p className="text-xs text-smoke">先上传商品图才能生成。</p>
+              <p className="text-[12px] text-fog">先上传商品图才能生成。</p>
             )}
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-3">
+        <Card className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-ink">3. 生成结果</h3>
+            <Eyebrow>03 · 生成结果</Eyebrow>
             {isWorking && <StatusTag status="running" />}
           </div>
           <ResultPanel
@@ -299,23 +306,28 @@ export default function ProjectPage() {
       </div>
 
       {(outputs.length > 0 || detail.recent_jobs.length > 0) && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-smoke">历史</h2>
+        <section className="flex flex-col gap-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[19px] font-medium tracking-[-0.01em] text-ink">历史</h2>
+            {outputs.length > 0 && (
+              <span className="text-[12px] text-helper">{outputs.length} 张作品</span>
+            )}
+          </div>
 
           {outputs.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {outputs.slice(0, 10).map((a) => (
                 <a
                   key={a.id}
                   href={a.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="group block overflow-hidden rounded-lg border border-line bg-surface"
+                  className="group block overflow-hidden rounded-[24px] border border-hairline bg-canvas p-1.5 shadow-[var(--shadow-subtle)] transition-transform duration-200 hover:-translate-y-0.5"
                 >
                   <img
                     src={a.url}
                     alt={a.filename}
-                    className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                    className="aspect-square w-full rounded-[18px] object-cover"
                   />
                 </a>
               ))}
@@ -323,27 +335,35 @@ export default function ProjectPage() {
           )}
 
           {detail.recent_jobs.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-line bg-surface">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-canvas text-xs text-smoke">
+            <div className="overflow-hidden rounded-[24px] border border-hairline bg-canvas">
+              <table className="w-full text-left text-[14px]">
+                <thead className="bg-sky/40">
                   <tr>
-                    <th className="px-3 py-2 font-normal">商品</th>
-                    <th className="px-3 py-2 font-normal">状态</th>
-                    <th className="px-3 py-2 font-normal">成本</th>
-                    <th className="px-3 py-2 font-normal">时间</th>
+                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-helper">
+                      商品
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-helper">
+                      状态
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-helper">
+                      成本
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-helper">
+                      时间
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {detail.recent_jobs.map((job) => (
-                    <tr key={job.id} className="border-t border-line">
-                      <td className="max-w-[10rem] truncate px-3 py-2 text-ink">
+                    <tr key={job.id} className="border-t border-hairline">
+                      <td className="max-w-[10rem] truncate px-4 py-3 text-ink">
                         {job.product_name || "—"}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-3">
                         <StatusTag status={job.status} />
                       </td>
-                      <td className="px-3 py-2 text-smoke">{formatFen(job.cost_fen)}</td>
-                      <td className="px-3 py-2 text-xs text-smoke">
+                      <td className="px-4 py-3 text-helper">{formatFen(job.cost_fen)}</td>
+                      <td className="px-4 py-3 text-[12px] text-helper">
                         {formatTime(job.created_at)}
                       </td>
                     </tr>
@@ -355,10 +375,9 @@ export default function ProjectPage() {
         </section>
       )}
 
-      <footer className="pt-2 text-xs text-smoke">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-hairline pt-6 text-[12px] text-helper">
         <span>阶段 2-1 · 单张主图端到端</span>
-        {" · "}
-        <Link href="/" className={buttonClass("ghost", "px-0 py-0 text-xs")}>
+        <Link href="/" className="text-teal hover:underline">
           返回列表
         </Link>
       </footer>

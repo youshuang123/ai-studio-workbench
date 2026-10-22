@@ -1,4 +1,4 @@
-verify.sh 自检  2026-10-23 00:49:11  目录：/Users/youshuang/Documents/project/项目1
+verify.sh 自检  2026-10-23 01:01:00  目录：/Users/youshuang/Documents/project/项目1
 
 ================ 1. mock 自动化测试 ================
 .........................................                                [100%]
@@ -18,8 +18,8 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 
  Test Files  4 passed (4)
       Tests  19 passed (19)
-   Start at  00:49:12
-   Duration  706ms (environment 85%, setup 9%, tests 3%, import 2%, transform 1%)
+   Start at  01:01:02
+   Duration  704ms (environment 84%, setup 10%, tests 3%, import 2%, transform 1%)
 
 结果：通过（41/41）；前端测试通过
 
@@ -32,7 +32,7 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 
 ================ 3. 数据重启恢复（调用 scripts/restart-check.sh） ================
 第一次启动：服务已就绪
-第一次启动：已写入项目 id=d7c997fd-93f0-443f-a025-3068028d2e51 资产 id=1ed14a69-50de-4421-927e-2829ccf59ec7
+第一次启动：已写入项目 id=c2dcb5ab-bf0f-47be-bb69-8140d0b66295 资产 id=c4981563-e4ad-4dfe-b4db-dd4c037afedf
 服务已停止。
 第二次启动：读回同一条项目记录，资产文件可访问（HTTP 200）。重启恢复通过。
 结果：通过
@@ -50,12 +50,12 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 ✓ Running next.config.ts took 10ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 233ms
+✓ Compiled successfully in 102ms
   Running TypeScript ...
-  Finished TypeScript in 505ms ...
+  Finished TypeScript in 534ms ...
   Collecting page data using 5 workers ...
   Generating static pages using 5 workers (0/3) ...
-✓ Generating static pages using 5 workers (3/3) in 181ms
+✓ Generating static pages using 5 workers (3/3) in 174ms
   Finalizing page optimization ...
 
 Route (app)

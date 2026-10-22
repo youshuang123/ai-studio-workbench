@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { TopNav } from "@/components/layout/TopNav";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,10 +14,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN">
-      <body>
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8">
+      <body className="min-h-screen bg-canvas">
+        <TopNav />
+        <main className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-8 md:px-6 md:pt-10">
           {children}
-        </div>
+        </main>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { Eyebrow } from "@/components/ui/Card";
 import { uploadAsset } from "@/features/api/client";
 import type { Asset } from "@/features/api/types";
 import { errorMessage } from "@/lib/api/client";
@@ -38,25 +39,25 @@ export function UploadBox({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-ink">1. 商品图</h3>
-        <span className="text-xs text-smoke">png / jpg / webp，≤10MB</span>
+      <div className="flex items-baseline justify-between">
+        <Eyebrow>01 · 商品图</Eyebrow>
+        <span className="text-[11px] text-fog">png / jpg / webp · ≤10MB</span>
       </div>
 
       {asset ? (
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
+        <div className="flex items-center gap-3 rounded-[20px] border border-hairline bg-canvas p-3">
           <img
             src={asset.url}
             alt="商品图预览"
-            className="size-16 shrink-0 rounded-lg border border-line object-cover"
+            className="size-16 shrink-0 rounded-[14px] border border-hairline object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm text-ink">{asset.filename}</p>
-            <p className="mt-1 text-xs text-smoke">
+            <p className="truncate text-[14px] text-ink">{asset.filename}</p>
+            <p className="mt-0.5 text-[12px] text-helper">
               {asset.width}×{asset.height} · {formatBytes(asset.bytes)}
             </p>
           </div>
-          <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+          <Button variant="quiet" onClick={() => inputRef.current?.click()}>
             换一张
           </Button>
         </div>
@@ -65,12 +66,12 @@ export function UploadBox({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-surface px-4 py-8 text-sm text-smoke hover:border-accent/50 disabled:opacity-60"
+          className="flex min-h-[132px] flex-col items-center justify-center gap-2 rounded-[20px] border border-dashed border-divider bg-sky/30 px-4 py-8 text-[14px] text-helper transition-colors hover:border-ink/40 disabled:opacity-60"
         >
           <span className="font-medium text-ink">
             {busy ? "正在上传…" : "点击上传商品图"}
           </span>
-          <span className="text-xs">建议正面清晰、纯色背景</span>
+          <span className="text-[12px]">建议正面清晰、纯色背景</span>
         </button>
       )}
 
@@ -82,7 +83,7 @@ export function UploadBox({
         onChange={(e) => void handleFile(e.target.files?.[0])}
       />
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-[13px] text-[#8c2b25]">{error}</p>}
     </div>
   );
 }
