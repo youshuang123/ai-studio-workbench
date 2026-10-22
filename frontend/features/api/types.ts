@@ -51,6 +51,7 @@ export type GenerationJob = {
   elapsed_ms: number | null;
   error_code: string;
   error_message: string;
+  cancel_requested?: boolean;
   created_at: string | null;
 };
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, Eyebrow } from "@/components/ui/Card";
 import { StatusTag } from "@/components/ui/StatusTag";
 import {
+  cancelJob,
   createGeneration,
   fetchProject,
   fetchUsage,
@@ -72,7 +73,8 @@ export default function ProjectPage() {
     void load();
   }, [load]);
 
-  const { stage, done, error: sseError, isWorking } = useJobEvents(jobId, load);
+  const [cancelling, setCancelling] = useState(false);
+  const { phase, isWorking, stopWaiting } = useJobEvents(jobId, load);
 
   const uploads = useMemo(
     () => (detail?.assets ?? []).filter((a) => a.kind === "upload"),
@@ -122,6 +124,21 @@ export default function ProjectPage() {
       setFormError(errorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!jobId || cancelling) return;
+    setCancelling(true);
+    setFormError(null);
+    try {
+      await cancelJob(jobId);
+      // 让 SSE 收尾；服务端会推 cancelled 事件，这里兜底刷新一次
+      await load();
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -279,9 +296,37 @@ export default function ProjectPage() {
               loading={submitting}
               disabled={!currentSource || isWorking}
               className="w-full"
+              aria-busy={submitting || isWorking}
             >
               {isWorking ? "生成中…" : "生成主图"}
             </Button>
+
+            {isWorking && (
+              <div className="flex flex-col gap-2 rounded-[16px] bg-sky/40 px-4 py-3">
+                <p className="text-[12px] leading-relaxed text-teal">
+                  不想等了？「停止等待」只是关掉这个页面的进度，任务还在后台跑；
+                  「取消任务」会让它真的停下。
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="quiet"
+                    onClick={stopWaiting}
+                    aria-label="停止等待，任务继续在后台生成"
+                  >
+                    停止等待
+                  </Button>
+                  <Button
+                    variant="quiet"
+                    onClick={handleCancel}
+                    loading={cancelling}
+                    aria-label="取消任务，让后端停止生成"
+                  >
+                    取消任务
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {!currentSource && (
               <p className="text-[12px] text-fog">先上传商品图才能生成。</p>
             )}
@@ -294,12 +339,11 @@ export default function ProjectPage() {
             {isWorking && <StatusTag status="running" />}
           </div>
           <ResultPanel
-            stage={stage}
-            done={done}
-            error={sseError}
+            phase={phase}
             isWorking={isWorking}
             onRetry={handleRetry}
             retrying={retrying}
+            onRefresh={() => void load()}
             fallback={latestSuccess}
           />
         </Card>

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -36,6 +37,7 @@ def _job_out(job: models.GenerationJob) -> dict:
         "elapsed_ms": elapsed_ms,
         "error_code": job.error_code,
         "error_message": job.error_message,
+        "cancel_requested": bool(getattr(job, "cancel_requested", False)),
         "created_at": job.created_at.isoformat() if job.created_at else None,
     }
 
@@ -143,6 +145,37 @@ def retry_job(job_id: str, db: Session = Depends(get_db)):
     return {"job_id": job.id, "status": job.status}
 
 
+@router.post("/jobs/{job_id}/cancel", status_code=202)
+def cancel_job(job_id: str, db: Session = Depends(get_db)):
+    """取消任务。
+
+    - queued：直接置 cancelled
+    - running：置 cancel_requested，执行器在检查点停止（已发出的 HTTP 请求无法中断，
+      费用可能已产生，因此提示按账单为准）
+    - 已结束：409
+    """
+    job = db.get(models.GenerationJob, job_id)
+    if job is None:
+        raise not_found("任务不存在")
+
+    if job.status == "queued":
+        job.status = "cancelled"
+        job.error_code = "CANCELLED_BY_USER"
+        job.error_message = "已取消，未产生费用"
+        job.finished_at = datetime.now(timezone.utc)
+        db.commit()
+        return {"job_id": job.id, "status": job.status, "cancel_requested": False}
+
+    if job.status == "running":
+        if job.cancel_requested:
+            return {"job_id": job.id, "status": job.status, "cancel_requested": True}
+        job.cancel_requested = True
+        db.commit()
+        return {"job_id": job.id, "status": job.status, "cancel_requested": True}
+
+    raise conflict("任务已结束，无法取消")
+
+
 @router.get("/jobs/{job_id}/events")
 async def job_events(job_id: str):
     """SSE：必须且只能以 done 或 error 收尾。"""
@@ -193,7 +226,18 @@ async def job_events(job_id: str):
                 )
                 return
 
-            if status in ("failed", "over_budget", "cancelled"):
+            if status == "cancelled":
+                yield _sse(
+                    "cancelled",
+                    {
+                        "job_id": job_id,
+                        "message": error_message or "已取消",
+                        "output_asset_id": output_asset_id,
+                    },
+                )
+                return
+
+            if status in ("failed", "over_budget"):
                 yield _sse(
                     "error",
                     {

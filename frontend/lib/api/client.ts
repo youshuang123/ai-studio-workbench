@@ -45,7 +45,12 @@ type ErrorBody = { error?: { code?: string; message?: string } };
 
 async function toApiError(resp: Response): Promise<ApiError> {
   let code = "INTERNAL_ERROR";
-  let message = "服务出现内部错误，请稍后重试";
+  // 后端进程没起来时，Next 的同源代理会返回 500 + 非 JSON，这里给可操作的文案，
+  // 而不是笼统的「内部错误」。
+  let message =
+    resp.status >= 500
+      ? "服务暂时不可用，请确认后端已启动，再点重试"
+      : "请求没成功，请稍后重试";
   try {
     const body = (await resp.json()) as ErrorBody;
     if (body?.error?.code) code = body.error.code;

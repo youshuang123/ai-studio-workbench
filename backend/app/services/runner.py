@@ -54,10 +54,22 @@ def run_job(job_id: str) -> None:
         job.status = "running"
         job.started_at = _now()
         job.attempts = (job.attempts or 0) + 1
+        job.cancel_requested = False
         db.commit()
 
         try:
             raw = model_client.generate_image(job.prompt, job.negative_prompt)
+
+            # 检查点 1：模型返回后再看一次是否被取消
+            db.refresh(job)
+            if job.cancel_requested:
+                job.status = "cancelled"
+                job.error_code = "CANCELLED"
+                job.error_message = "已取消。本次调用可能已产生费用，请以供应商账单为准"
+                job.finished_at = _now()
+                db.commit()
+                return
+
             saved = storage.save_generated(raw)
 
             asset = models.Asset(
@@ -106,6 +118,14 @@ def run_job(job_id: str) -> None:
                 },
             )
         except model_client.ModelError as exc:
+            db.refresh(job)
+            if job.cancel_requested:
+                job.status = "cancelled"
+                job.error_code = "CANCELLED"
+                job.error_message = "已取消"
+                job.finished_at = _now()
+                db.commit()
+                return
             job.status = "failed"
             job.error_code = exc.code
             job.error_message = exc.message

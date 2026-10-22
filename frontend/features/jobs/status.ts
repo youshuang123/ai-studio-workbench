@@ -14,6 +14,7 @@ export type JobState =
   | "error"
   | "blocked"
   | "cancelled"
+  | "disconnected"
   | "stale";
 
 const MAP: Record<string, JobState> = {
@@ -23,6 +24,7 @@ const MAP: Record<string, JobState> = {
   failed: "error",
   over_budget: "blocked",
   cancelled: "cancelled",
+  disconnected: "disconnected",
 };
 
 /** 未知状态一律走 stale：不当成成功，也不当成失败。 */
@@ -44,7 +46,9 @@ export function jobStateLabel(state: JobState): string {
     case "blocked":
       return "超预算";
     case "cancelled":
-      return "已取消";
+      return "已停止";
+    case "disconnected":
+      return "连接中断";
     default:
       return "状态未知";
   }

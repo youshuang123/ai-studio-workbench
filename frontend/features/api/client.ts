@@ -68,3 +68,10 @@ export function retryJob(jobId: string) {
     { method: "POST" },
   );
 }
+
+export function cancelJob(jobId: string) {
+  return apiFetch<{ job_id: string; status: string; cancel_requested: boolean }>(
+    `/api/jobs/${jobId}/cancel`,
+    { method: "POST" },
+  );
+}

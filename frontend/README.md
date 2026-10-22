@@ -46,5 +46,8 @@ npm run build        # 生产构建
 - 金额一律由后端以「分」传入，前端只负责格式化成 `¥0.03`
 - 未知任务状态走 `stale`（"状态未知"），不当成成功也不当成失败
 - 后端错误 `{"error":{"code","message"}}` 由 `lib/api/client.ts` 归一化成 `ApiError`，界面只显示 `userMessage`
-- 生成进度用 SSE：`status → done | error`；`error` 事件与连接断开同名，靠是否带 `data` 区分
+- 生成进度用 SSE：`status → done | error | cancelled`；`error` 事件与连接断开同名，靠是否带 `data` 区分
+- **断线不猜结果**：连接断了先 `GET /api/jobs/{id}` 回查真实状态，仍在跑才重连（最多 2 次）
+- **停止等待 ≠ 取消任务**：前者只关 SSE（任务继续），后者调后端真取消
+- 不可重试的错误（预算不足 / 未配 Key）不显示重试按钮
 - 资产图片直接由 `GET /api/assets/{id}/file` 提供，不经 next/image 优化管线

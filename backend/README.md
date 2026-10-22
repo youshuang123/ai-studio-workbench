@@ -53,8 +53,9 @@ MODEL_API_KEY="" ./.venv/bin/python -m pytest -q     # 41 条 mock 测试，离�
 | GET | `/api/assets/{id}/download` | 下载原图 |
 | POST | `/api/projects/{id}/generations` | 创建生成任务（202） |
 | GET | `/api/jobs/{id}` | 任务详情 |
-| GET | `/api/jobs/{id}/events` | **SSE**：`status → done` / `error` |
+| GET | `/api/jobs/{id}/events` | **SSE**：`status → done` / `error` / `cancelled` |
 | POST | `/api/jobs/{id}/retry` | 重试失败/超预算任务 |
+| POST | `/api/jobs/{id}/cancel` | 取消任务：`queued` 直接取消；`running` 置 `cancel_requested`，执行器在检查点停止（已发出的请求可能已产生费用） |
 
 错误结构统一为 `{"error": {"code": "...", "message": "..."}}`，不返回堆栈。
 

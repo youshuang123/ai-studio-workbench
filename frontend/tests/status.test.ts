@@ -10,6 +10,7 @@ describe("mapJobStatus", () => {
     expect(mapJobStatus("failed")).toBe("error");
     expect(mapJobStatus("over_budget")).toBe("blocked");
     expect(mapJobStatus("cancelled")).toBe("cancelled");
+    expect(mapJobStatus("disconnected")).toBe("disconnected");
   });
 
   it("未知状态走 stale，不当成成功也不当成失败", () => {
@@ -26,6 +27,8 @@ describe("jobStateLabel", () => {
     expect(jobStateLabel("success")).toBe("已完成");
     expect(jobStateLabel("error")).toBe("失败");
     expect(jobStateLabel("blocked")).toBe("超预算");
+    expect(jobStateLabel("cancelled")).toBe("已停止");
+    expect(jobStateLabel("disconnected")).toBe("连接中断");
     expect(jobStateLabel("stale")).toBe("状态未知");
   });
 });
