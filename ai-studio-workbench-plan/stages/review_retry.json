@@ -1,0 +1,57 @@
+{
+  "ok": false,
+  "score": 62,
+  "issues": [
+    {
+      "section": "facts.goal / facts.deliverable",
+      "problem": "goal 的 value 写「成功标准输入未给出可量化指标」这一判断本身合理，但整条事实被标为「待确认」，而「在云端提供视觉创作工作台、用户在画布上生成编辑组合图像」在输入中有明确出处，应拆分为已确认事实与待确认项；deliverable 的 source 为空字符串，却给出「交付物推测为图像及可能的视频等视觉内容产物」的推测内容，属于无出处陈述，违反不编造铁律。",
+      "severity": "high"
+    },
+    {
+      "section": "components.s03 权限系统",
+      "problem": "标为「待确认」并称输入未说明是否涉及破坏性或敏感操作，但 facts.constraints 与 elements.permissions 均引用输入原文「通过账号、授权……协作」，方案自身也要求所有敏感动作先过授权校验，并已设计 verify_identity_and_authorization 工具。选型结论与方案自述矛盾，且该矛盾被推给 open_questions 而未解决。",
+      "severity": "high"
+    },
+    {
+      "section": "components.s15 集成 Harness",
+      "problem": "放弃理由为「可选组件不足 3 个」，但同一份方案中待确认组件多达十余个，判断前提不成立，属于依据与事实不一致。",
+      "severity": "high"
+    },
+    {
+      "section": "design.tool_list 图层标注",
+      "problem": "工具的 layer 字段取值为 ②③④ 等，但输入与方案正文均未定义图层含义与分层规则，属无出处信息，需补充定义或标注待确认。",
+      "severity": "medium"
+    },
+    {
+      "section": "design.tool_list 五要素一致性",
+      "problem": "render_canvas_preview 与 query_inference_logs 对应观察要素，verify_identity_and_authorization 与 request_compute_scheduling 对应权限/行动要素，但方案未逐一给出工具到五要素的映射说明；elements.tools 中的「画布级图像操作能力」在工具清单中被拆为 edit_image 与 compose_images，画布交互本身反而只落在 render_canvas_preview 上，与 elements.action 中「用户通过 UI 交互发起请求」缺少对应工具，一致性说明不完整。",
+      "severity": "medium"
+    },
+    {
+      "section": "验收标准 可度量",
+      "problem": "metrics 列出工具调用成功率等指标，但明确写出「过程指标到产品目标的映射待确认」，可度量一条未闭环；方案对此只列入 open_questions，未给出可采集的最小对齐方案。",
+      "severity": "medium"
+    },
+    {
+      "section": "验收标准 可运行 / 可部署 / 可测试",
+      "problem": "tech_stack_and_deployment 中语言、框架、启动方式、测试框架均为待确认，仅以「建议形态为单进程 Agent 服务（部署形态最终待确认）」描述，可运行与可部署两条验收标准缺少可验证的具体设计；可测试仅描述应有单测与边界测试，未指明测试对象与边界用例。",
+      "severity": "medium"
+    },
+    {
+      "section": "design.security_and_degradation 超时项",
+      "problem": "超时降级写「确认前按平台默认超时处理」，但平台默认超时值输入未给出，也未标注该值待确认，属于引入输入中不存在的事实。",
+      "severity": "medium"
+    },
+    {
+      "section": "components.s05 / s10 二期依据",
+      "problem": "二期的判断引用了输入中电商素材与批量短剧工作流，但这些内容在输入中属于「需要设计的两种场景（问题 1）」，并非已确认的功能需求，方案已在 open_questions 中自认此点，但仍保留该结论。",
+      "severity": "low"
+    },
+    {
+      "section": "components 选型 feature 字段",
+      "problem": "多数组件 feature 字段填写了 multi_step、context_heavy 等特征标识，但方案未定义特征证据的判定口径与来源，无法核验「选型理由与特征证据一致」这一审查标准。",
+      "severity": "low"
+    }
+  ],
+  "summary": "方案整体遵守了不编造原则，把大量输入缺失项显式标为待确认，安全降级与可观测设计覆盖了工具失败、幻觉、超时、越权四类路径。但存在三处高危问题：deliverable 存在无出处的推测内容；权限系统选型与输入明示的授权依赖自相矛盾；集成 Harness 的放弃理由前提不成立。此外可运行、可部署、可度量三条验收标准尚未闭环，需补齐后再评审。"
+}

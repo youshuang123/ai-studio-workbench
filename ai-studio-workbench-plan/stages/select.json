@@ -1,0 +1,123 @@
+{
+  "components": [
+    {
+      "id": "s01",
+      "name": "Agent Loop",
+      "decision": "必选",
+      "reason": "一切基础：循环 + 工具（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s02",
+      "name": "工具系统",
+      "decision": "必选",
+      "reason": "需要调用外部系统/API/数据源（一切基础，恒选）",
+      "feature": ""
+    },
+    {
+      "id": "s03",
+      "name": "权限系统",
+      "decision": "待确认",
+      "reason": "输入未说明：是否涉及破坏性或敏感操作（删除、写入外部系统、支付、发送消息、隐私数据）？",
+      "feature": "destructive_ops"
+    },
+    {
+      "id": "s04",
+      "name": "钩子系统",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要审计、拦截、埋点、合规记录？",
+      "feature": "audit_needed"
+    },
+    {
+      "id": "s05",
+      "name": "任务规划",
+      "decision": "二期",
+      "reason": "输入提到电商素材工作流与批量短剧自动化工作流属于多步骤场景，但当前问题聚焦 MVP 核心模块，未要求进度跟踪。",
+      "feature": "multi_step"
+    },
+    {
+      "id": "s06",
+      "name": "子 Agent",
+      "decision": "待确认",
+      "reason": "输入未说明：是否会出现上下文爆炸的子任务，或可并行的探索型子任务？",
+      "feature": "context_heavy"
+    },
+    {
+      "id": "s07",
+      "name": "技能加载",
+      "decision": "待确认",
+      "reason": "输入未说明：领域知识库是否庞大、需要按需加载？",
+      "feature": "large_knowledge"
+    },
+    {
+      "id": "s08",
+      "name": "上下文压缩",
+      "decision": "待确认",
+      "reason": "输入未说明：会话是否很长、工具输出或日志量是否很大？",
+      "feature": "long_sessions"
+    },
+    {
+      "id": "s09",
+      "name": "记忆系统",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要跨会话记住用户偏好、决策、历史？",
+      "feature": "cross_session_memory"
+    },
+    {
+      "id": "s10",
+      "name": "任务系统",
+      "decision": "二期",
+      "reason": "输入提到批量短剧自动化与批量出片场景，暗示目标可能需持久化与断点续跑，但第一版 MVP 未明确要求。",
+      "feature": "persistent_goals"
+    },
+    {
+      "id": "s11",
+      "name": "后台任务",
+      "decision": "待确认",
+      "reason": "输入未说明：是否有耗时几分钟以上的慢操作需要不阻塞主流程？",
+      "feature": "slow_operations"
+    },
+    {
+      "id": "s12",
+      "name": "定时调度",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要定时自动触发？",
+      "feature": "scheduled"
+    },
+    {
+      "id": "s13",
+      "name": "Agent 团队",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要多任务并行且各自隔离工作区（多 Agent 团队）？",
+      "feature": "parallel_isolated"
+    },
+    {
+      "id": "s14",
+      "name": "MCP 插件",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要接入外部工具生态（MCP、第三方插件）？",
+      "feature": "external_ecosystem"
+    },
+    {
+      "id": "s15",
+      "name": "集成 Harness",
+      "decision": "放弃",
+      "reason": "可选组件不足 3 个，直接在 loop 里挂接即可",
+      "feature": ""
+    },
+    {
+      "id": "s16",
+      "name": "工作流运行时",
+      "decision": "待确认",
+      "reason": "输入未说明：编排形态是否固定、适合写死成工作流？",
+      "feature": "fixed_orchestration"
+    },
+    {
+      "id": "s17",
+      "name": "目标闭环",
+      "decision": "待确认",
+      "reason": "输入未说明：是否需要自动判断「何时算完成」（独立评估器）？",
+      "feature": "auto_completion"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+task,model,deployment,quality,consistency,controllability,cost,latency,license,instruction,ecosystem,weighted_score,notes
+t2i,FLUX.1 [dev],self-host,5,4,5,3,3,2,,,4.1,可控性强；需商业授权
+t2i,Qwen-Image,self-host,4,4,4,4,4,5,,,4.05,中文文字好；license 友好
+t2i,FLUX.1 [schnell],self-host,3,3,3,5,5,5,,,3.6,草稿/批量；Apache 2.0
+t2i,SD3.5 Large,self-host,3,3,4,4,3,3,,,3.3,生态成熟；质量中等
+t2i,Seedream 4.0,api,5,5,4,2,4,4,,,4.25,质量上限；API 成本
+t2i,GPT-Image-1,api,5,4,3,2,4,4,,,3.85,文字/指令强；成本高
+t2i,Imagen 4,api,5,4,3,2,4,4,,,3.85,写实强；成本高
+t2i,Nano Banana,api,4,5,4,3,4,4,,,4.1,多图融合/一致性
+video,Wan2.2-I2V-A14B,self-host,4,4,5,5,3,5,,,4.35,MVP 视频主力；首尾帧
+video,HunyuanVideo,self-host,5,4,4,4,3,3,,,4.15,质量高；license 需确认
+video,LTX-Video 2,self-host,3,3,3,5,5,4,,,3.45,草稿/预览
+video,Kling 2.5,api,5,5,4,2,4,4,,,4.25,精品镜头
+video,Seedance 1.0,api,5,4,4,3,4,4,,,4.1,质量/成本平衡
+video,Veo 3,api,5,5,4,1,4,4,,,4.1,质量上限；成本最高
+llm,Qwen3-235B-A22B,self-host,5,5,4,4,5,5,5,5,4.7,自托管首选
+llm,Qwen3-32B,self-host,4,4,5,5,5,5,4,5,4.45,成本/延迟优；路由
+llm,DeepSeek-V3.1,api,5,5,4,4,4,4,5,4,4.55,API 质量/成本平衡
+llm,Claude Sonnet 4,api,5,5,2,4,4,4,5,4,4.15,长文本/结构化强；贵
+llm,GPT-4.1,api,5,5,2,4,4,4,5,5,4.25,通用强；贵

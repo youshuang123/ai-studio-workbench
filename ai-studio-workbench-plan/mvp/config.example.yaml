@@ -1,0 +1,80 @@
+# AI Studio MVP skeleton config.
+# Copy to config.yaml and edit. Secrets belong in .env, not here.
+
+currency: CNY
+data_dir: data
+
+budget:
+  max_cost_per_run: 5.00          # 单次运行总预算（元）
+  max_cost_per_image: 0.10        # 标准图单价上限
+  max_cost_per_image_premium: 2.00
+  max_cost_per_video_minute: 1.00 # 标准视频每分钟上限（轻动效口径）
+  max_cost_per_video_minute_premium: 30.00
+
+retry:
+  max_attempts: 2
+  base_delay_seconds: 0.2
+
+cache:
+  enabled: true
+
+qa:
+  consistency_threshold: 0.85
+  prompt_adherence_threshold: 0.70
+
+providers:
+  # Offline demo provider. No API key needed.
+  mock:
+    type: mock
+    models:
+      image.cheap:
+        unit: image
+        price: 0.06
+        tasks: [image.generate, image.edit]
+      image.premium:
+        unit: image
+        price: 0.30
+        tasks: [image.generate, image.edit]
+      llm.cheap:
+        unit: request
+        price: 0.002
+        tasks: [llm.chat]
+      vision.qa:
+        unit: request
+        price: 0.005
+        tasks: [vision.qa]
+      video.cheap:
+        unit: second
+        price: 0.01
+        tasks: [video.generate]
+
+  # Real HTTP provider template. Uncomment and fill after you have a vendor.
+  # vendor_a:
+  #   type: http
+  #   base_url: https://api.vendor-a.example
+  #   endpoint: /v1/images/generate
+  #   api_key_env: VENDOR_A_API_KEY
+  #   response_type: image_url
+  #   timeout_seconds: 120
+  #   models:
+  #     image.cheap:
+  #       unit: image
+  #       price: 0.06
+  #       tasks: [image.generate, image.edit]
+
+routing:
+  image.generate:
+    standard: [mock/image.cheap]
+    premium: [mock/image.premium]
+  image.edit:
+    standard: [mock/image.cheap]
+    premium: [mock/image.premium]
+  llm.chat:
+    standard: [mock/llm.cheap]
+    premium: [mock/llm.cheap]
+  vision.qa:
+    standard: [mock/vision.qa]
+    premium: [mock/vision.qa]
+  video.generate:
+    standard: [mock/video.cheap]
+    premium: [mock/video.cheap]

@@ -1,0 +1,77 @@
+{
+  "ok": false,
+  "score": 58,
+  "issues": [
+    {
+      "section": "facts.deliverable",
+      "problem": "交付物一条的 source 为空字符串，却写入了「交付物推测为图像及可能的视频等视觉内容产物」这类推测性内容。按审查标准第1条，无出处的陈述必须标注待确认或写入待确认清单，而不是在 facts 区给出推测结论并挂空的 source。",
+      "severity": "high"
+    },
+    {
+      "section": "elements.tools",
+      "problem": "工具清单把「接入账号与授权平台能力」「接入算力调度平台能力」列为工具，但输入只说明三者通过账号、授权、算力调度等平台能力协作，并未说明这些能力以可调用工具的形式暴露、接口形态与调用主体。属于对输入的部分脑补，且未在条目上标注待确认。",
+      "severity": "medium"
+    },
+    {
+      "section": "design.tool_list（五要素一致性）",
+      "problem": "工具层标注存在贯通性问题：verify_identity_and_authorization 与 query_inference_logs 的 layer 标注为「⑤权限」「⑥可观测」，但输入原始五要素中并未定义第⑥要素「可观测」（只有工具/知识/观察/行动接口/权限）。第③「观察」被当成工具层的读取画布动作，混淆了「观察」与「工具」的边界。六层编号体系与输入五要素不一致，缺少出处。",
+      "severity": "high"
+    },
+    {
+      "section": "design.tool_list（generate_image/edit_image/compose_images）",
+      "problem": "三个核心生成/编辑/组合工具全部依赖「云端大模型」，但模型选型、调用协议、参数清单在输入中均未给出，方案将其 permission 直接定为 allow 并可执行，未标注为待确认或阻塞项。按标准第1条，这属于在关键事实未确认时给出可执行结论。",
+      "severity": "high"
+    },
+    {
+      "section": "六条验收标准覆盖（可运行）",
+      "problem": "方案在 tech_stack_and_deployment 中写「第一版为单进程 Agent 服务」，但未给出「一条命令能起」的启动方式、配置与密钥外置（.env/config）设计，也未说明语言与框架（标为待确认）。可运行标准无对应设计。",
+      "severity": "high"
+    },
+    {
+      "section": "六条验收标准覆盖（可容错）",
+      "problem": "security_and_degradation 覆盖了工具失败、模型幻觉、超时、越权四类，但「超时阈值」「重试策略」「慢操作是否转后台」均标为待确认，降级路径不完整、不可执行；且重试策略缺失导致容错设计停留在原则层面。",
+      "severity": "medium"
+    },
+    {
+      "section": "六条验收标准覆盖（可测试）",
+      "problem": "方案未提及任何单测与边界测试设计。审查标准要求「核心循环与工具分派有单测，权限与安全有边界测试」，方案中无对应章节，可测试标准完全无设计。",
+      "severity": "high"
+    },
+    {
+      "section": "六条验收标准覆盖（可度量）",
+      "problem": "metrics 列表给出了工具成功率、推理耗时、拒绝率等过程指标，但 facts.goal 已明确「成功标准输入未给出可量化指标」，方案未定义任何对齐 PRD 的成功指标，也未说明这些过程指标如何对应到产品目标。可度量标准不达标。",
+      "severity": "high"
+    },
+    {
+      "section": "六条验收标准覆盖（可观测）",
+      "problem": "logs/metrics/trajectory 结构完整，但「云端推理日志的内容与可得性」被列为待确认，而 query_inference_logs 工具本身依赖日志可得性，可观测设计的关键依赖悬空。",
+      "severity": "medium"
+    },
+    {
+      "section": "components（s03 权限系统）",
+      "problem": "权限系统 decision 标为「待确认」，理由是「输入未说明是否涉及破坏性/敏感操作」。但输入已明确「依赖账号、授权……平台能力协作」，且工具清单中已放入 verify_identity_and_authorization，说明方案自身认为需要授权校验。组件选型结论与工具清单设计自相矛盾。",
+      "severity": "medium"
+    },
+    {
+      "section": "components（s15 集成 Harness）",
+      "problem": "s15「集成 Harness」的放弃理由为「可选组件不足 3 个，直接在 loop 里挂接即可」，但该理由依赖对可选组件数量的判断，而其他组件多为待确认状态，数量判断不成立，理由与特征证据不一致。",
+      "severity": "low"
+    },
+    {
+      "section": "components 选型理由",
+      "problem": "s01/s02 的 reason 为「一切基础，恒选」，s05/s10 的 reason 引用「电商素材工作流与批量短剧自动化工作流」，但原始输入中这两个工作流仅在「需要回答的问题」里作为待设计的场景被提出，并非已确认的产品需求。以提问中的待设计场景作为二期决策依据，属于把待确认当已知。",
+      "severity": "medium"
+    },
+    {
+      "section": "design.system_prompt",
+      "problem": "系统提示词写入「不推送到工作台之外」「产物只写入画布」等边界规则，但输入未给出该边界，boundaries 一条自身也标注为待确认。系统提示词中出现无出处的硬约束。",
+      "severity": "high"
+    },
+    {
+      "section": "design.context_memory_strategy",
+      "problem": "写「第一版默认不跨会话持久化创作偏好」，这是一个产品决策，但输入从未涉及记忆与偏好，方案自己也将记忆系统标为待确认，却在策略中给出默认结论，决策与待确认状态冲突。",
+      "severity": "medium"
+    }
+  ],
+  "summary": "方案在事实区基本做到了标注来源与待确认，结构可用，但存在多处硬伤：交付物一条 source 为空却给出推测结论；工具层的权限/可观测分层与输入五要素不一致；核心生成工具在模型选型未确认时即定为 allow；六条验收标准中可运行、可测试、可度量三项缺少对应设计；系统提示词写入无出处的边界约束。建议先补齐可运行启动与配置外置、单测与边界测试、对齐 PRD 的成功指标，并清理所有无出处陈述。有 high 级问题，判定不通过。"
+}
