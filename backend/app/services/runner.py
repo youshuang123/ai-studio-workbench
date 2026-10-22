@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from .. import models
 from ..db import SessionLocal
-from . import model_client, storage
+from . import color_delta, model_client, qa, storage
 
 
 def _now() -> datetime:
@@ -17,6 +17,44 @@ def _now() -> datetime:
 
 
 TERMINAL_STATUSES = {"succeeded", "failed", "over_budget", "cancelled"}
+
+
+def _run_qa(db, job: models.GenerationJob, out_rel_path: str) -> None:
+    """ΔE + VLM 打分，写回 job。任何失败都不影响出图结果。"""
+    src_job = db.get(models.GenerationJob, job.refined_from)
+    if src_job is None or not src_job.output_asset_id:
+        return
+    src_asset = db.get(models.Asset, src_job.output_asset_id)
+    out_asset_path = storage.abs_path_for(out_rel_path)
+    if src_asset is None or not out_asset_path.exists():
+        return
+
+    src_path = storage.abs_path_for(src_asset.path)
+    if not src_path.exists():
+        return
+
+    # 1) 颜色一致性
+    try:
+        cmp = color_delta.compare_bytes(src_path.read_bytes(), out_asset_path.read_bytes())
+        job.delta_e = cmp["delta_e"]
+    except Exception:  # noqa: BLE001
+        job.delta_e = None
+
+    # 2) VLM 打分
+    result = qa.evaluate(
+        out_asset_path.read_bytes(),
+        product_name=job.product_name or "",
+        reference_bytes=src_path.read_bytes(),
+    )
+    if result.get("ok"):
+        job.qa_score = result["total"]
+        job.qa_detail = __import__("json").dumps(result, ensure_ascii=False)
+    else:
+        job.qa_detail = __import__("json").dumps(
+            {"ok": False, "error": result.get("error"), "message": result.get("message")},
+            ensure_ascii=False,
+        )
+    db.commit()
 
 
 def mark_interrupted_jobs() -> int:
@@ -58,7 +96,23 @@ def run_job(job_id: str) -> None:
         db.commit()
 
         try:
-            raw = model_client.generate_image(job.prompt, job.negative_prompt)
+            # 精修走图生图；草稿走文生图
+            if job.stage == "refined" and job.refined_from:
+                src_job = db.get(models.GenerationJob, job.refined_from)
+                src_asset = (
+                    db.get(models.Asset, src_job.output_asset_id)
+                    if src_job and src_job.output_asset_id
+                    else None
+                )
+                if src_asset is None:
+                    raise model_client.ModelError("SOURCE_MISSING", "找不到要精修的草稿图")
+                src_path = storage.abs_path_for(src_asset.path)
+                if not src_path.exists():
+                    raise model_client.ModelError("SOURCE_MISSING", "草稿图文件已丢失")
+                raw_src = src_path.read_bytes()
+                raw = model_client.generate_edit(job.prompt, raw_src, src_asset.mime)
+            else:
+                raw = model_client.generate_image(job.prompt, job.negative_prompt)
 
             # 检查点 1：模型返回后再看一次是否被取消
             db.refresh(job)
@@ -101,6 +155,13 @@ def run_job(job_id: str) -> None:
                 )
             )
             db.commit()
+
+            # 精修图自动质检：ΔE（本地免费）+ VLM 打分
+            if job.stage == "refined" and job.refined_from:
+                try:
+                    _run_qa(db, job, saved.rel_path)
+                except Exception:  # noqa: BLE001 质检失败不影响出图
+                    db.rollback()
 
             storage.write_sidecar(
                 saved.rel_path,

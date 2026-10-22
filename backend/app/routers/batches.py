@@ -48,6 +48,10 @@ def _job_out(job: models.GenerationJob) -> dict:
         "output_asset_id": job.output_asset_id,
         "error_code": job.error_code,
         "error_message": job.error_message,
+        "stage": getattr(job, "stage", "draft") or "draft",
+        "refined_from": getattr(job, "refined_from", None),
+        "delta_e": getattr(job, "delta_e", None),
+        "qa_score": getattr(job, "qa_score", None),
     }
 
 
@@ -329,6 +333,90 @@ def retry_item(batch_id: str, item_id: str, db: Session = Depends(get_db)):
     runner.run_job(job.id)
     db.refresh(job)
     return {"item": _job_out(job), "batch": _batch_out(batch_id and _get_batch_or_404(batch_id, db))}
+
+
+@router.post("/batches/{batch_id}/refine", status_code=202)
+def refine_items(batch_id: str, body: dict, db: Session = Depends(get_db)):
+    """批量精修选中的行。一次最多 BATCH_REFINE_LIMIT 条，且受精修预算约束。"""
+    batch = _get_batch_or_404(batch_id, db)
+
+    ids = body.get("item_ids") or []
+    if not isinstance(ids, list) or not ids:
+        raise bad_request("请选择要精修的行", "NO_ITEMS")
+    if len(ids) > config.BATCH_REFINE_LIMIT:
+        raise bad_request(
+            f"一次最多精修 {config.BATCH_REFINE_LIMIT} 条", "TOO_MANY_ITEMS"
+        )
+
+    if not config.edit_configured():
+        raise AppError(503, "EDIT_NOT_CONFIGURED", "未配置精修模型 Key")
+
+    jobs = (
+        db.query(models.GenerationJob)
+        .filter(
+            models.GenerationJob.id.in_(ids),
+            models.GenerationJob.batch_id == batch_id,
+        )
+        .all()
+    )
+    eligible = [
+        j for j in jobs if j.status == "succeeded" and j.output_asset_id and (j.stage or "draft") == "draft"
+    ]
+    if not eligible:
+        raise conflict("选中的行里没有可精修的成功草稿")
+
+    # 精修预算：本批已花的精修成本
+    spent = (
+        db.query(models.GenerationJob)
+        .filter(
+            models.GenerationJob.batch_id == batch_id,
+            models.GenerationJob.stage == "refined",
+            models.GenerationJob.status == "succeeded",
+        )
+        .with_entities(models.GenerationJob.cost_fen)
+        .all()
+    )
+    spent_fen = sum(r[0] or 0 for r in spent)
+    need = config.EDIT_UNIT_PRICE_FEN * len(eligible)
+    if spent_fen + need > config.BATCH_REFINE_BUDGET_FEN:
+        raise budget_exceeded(
+            f"精修预算不足：本批已花 {spent_fen / 100:.2f} 元，"
+            f"本次需要 {need / 100:.2f} 元，上限 {config.BATCH_REFINE_BUDGET_FEN / 100:.2f} 元"
+        )
+
+    created = []
+    for src in eligible:
+        job = models.GenerationJob(
+            project_id=batch.project_id,
+            batch_id=batch_id,
+            sku_code=src.sku_code or "",
+            status="queued",
+            stage="refined",
+            refined_from=src.id,
+            product_name=src.product_name,
+            prompt=src.prompt,
+            negative_prompt=src.negative_prompt,
+            source_asset_id=src.output_asset_id,
+            provider=config.EDIT_BASE_URL,
+            model=config.EDIT_MODEL,
+            unit_price_fen=config.EDIT_UNIT_PRICE_FEN,
+            budget_fen=config.EDIT_UNIT_PRICE_FEN * 10,
+        )
+        db.add(job)
+        db.flush()
+        created.append(job.id)
+    db.commit()
+
+    from ..services import runner
+
+    for jid in created:
+        runner.start_job(jid)
+
+    return {
+        "created": len(created),
+        "job_ids": created,
+        "estimated_cost_fen": need,
+    }
 
 
 @router.get("/batches/{batch_id}/events")

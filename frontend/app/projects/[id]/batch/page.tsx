@@ -15,6 +15,7 @@ import {
   fetchBatch,
   listBatches,
   resumeBatch,
+  refineItems,
   retryItem,
   subscribeBatch,
   trialBatch,
@@ -23,6 +24,7 @@ import {
 import type { Batch, BatchProgress, ValidateResult } from "@/features/batch/types";
 import { fetchProject } from "@/features/api/client";
 import type { ProjectDetail } from "@/features/api/types";
+import { DeltaBadge, QaBadge } from "@/features/qa/components";
 import { errorMessage } from "@/lib/api/client";
 import { formatFen } from "@/lib/utils/format";
 
@@ -41,6 +43,7 @@ export default function BatchPage() {
   const [trialAssetId, setTrialAssetId] = useState<string | null>(null);
 
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -224,6 +227,33 @@ export default function BatchPage() {
         },
         onError: (code, message) => setError(`${message}（${code}）`),
       });
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleRefineSelected() {
+    if (!batch || selected.length === 0) return;
+    const price = (selected.length * 0.3).toFixed(2);
+    if (!window.confirm(`精修 ${selected.length} 张，预计花费 ¥${price}。继续吗？`)) return;
+    setBusy("refine");
+    setError(null);
+    try {
+      const resp = await refineItems(batch.id, selected);
+      setNotice(`已开始精修 ${resp.created} 张，预计 ¥${(resp.estimated_cost_fen / 100).toFixed(2)}。完成后刷新查看。`);
+      setSelected([]);
+      // 精修是后台任务，轮询刷新
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const b = await fetchBatch(batch.id);
+        setBatch(b);
+        const done = (b.items ?? []).filter(
+          (it) => it.stage === "refined" && it.status === "succeeded",
+        ).length;
+        if (done >= selected.length) break;
+      }
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -454,38 +484,87 @@ export default function BatchPage() {
                   </a>
                 )}
               </div>
+              <div className="flex flex-wrap items-center gap-3 rounded-[16px] bg-sky/30 px-4 py-3">
+                <span className="text-[12px] text-helper">
+                  已选 {selected.length} 张
+                  {selected.length > 0 && `（精修约 ¥${(selected.length * 0.3).toFixed(2)}）`}
+                </span>
+                <Button
+                  variant="quiet"
+                  onClick={handleRefineSelected}
+                  loading={busy === "refine"}
+                  disabled={selected.length === 0 || busy === "refine"}
+                >
+                  精修选中的 {selected.length} 张
+                </Button>
+                <span className="text-[11px] text-fog">
+                  精修会参考原图重绘，保留形状颜色，约 ¥0.30/张
+                </span>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-1.5 rounded-[18px] border border-hairline bg-canvas p-1.5"
-                  >
-                    {item.output_asset_id ? (
-                      <img
-                        src={`/api/assets/${item.output_asset_id}/file`}
-                        alt={item.sku_code}
-                        className="aspect-square w-full rounded-[14px] object-cover"
-                      />
-                    ) : (
-                      <div className="flex aspect-square w-full items-center justify-center rounded-[14px] bg-hairline text-[11px] text-helper">
-                        {item.error_message || "未完成"}
+                {items.map((item) => {
+                  const selectable = item.status === "succeeded" && item.stage !== "refined";
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-1.5 rounded-[18px] border border-hairline bg-canvas p-1.5"
+                    >
+                      {item.output_asset_id ? (
+                        <div className="relative">
+                          <img
+                            src={`/api/assets/${item.output_asset_id}/file`}
+                            alt={item.sku_code}
+                            className="aspect-square w-full rounded-[14px] object-cover"
+                          />
+                          {selectable && (
+                            <input
+                              type="checkbox"
+                              aria-label={`选择 ${item.sku_code}`}
+                              checked={selected.includes(item.id)}
+                              onChange={(e) =>
+                                setSelected((prev) =>
+                                  e.target.checked
+                                    ? [...prev, item.id]
+                                    : prev.filter((id) => id !== item.id),
+                                )
+                              }
+                              className="absolute right-2 top-2 size-5 accent-[#08304c]"
+                            />
+                          )}
+                          {item.stage === "refined" && (
+                            <span className="absolute left-2 top-2 rounded-full bg-ink px-2 py-0.5 text-[10px] text-canvas">
+                              已精修
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex aspect-square w-full items-center justify-center rounded-[14px] bg-hairline text-[11px] text-helper">
+                          {item.error_message || "未完成"}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between px-1">
+                        <span className="truncate text-[11px] text-ink">{item.sku_code}</span>
+                        <StatusTag status={item.status} />
                       </div>
-                    )}
-                    <div className="flex items-center justify-between px-1 pb-1">
-                      <span className="truncate text-[11px] text-ink">{item.sku_code}</span>
-                      <StatusTag status={item.status} />
+                      {item.stage === "refined" && (
+                        <div className="flex flex-wrap gap-1 px-1">
+                          <DeltaBadge deltaE={item.delta_e} />
+                          <QaBadge score={item.qa_score} />
+                        </div>
+                      )}
+                      {["failed", "over_budget"].includes(item.status) && (
+                        <button
+                          type="button"
+                          onClick={() => void handleRetry(item.id)}
+                          className="rounded-full bg-sky px-2 py-1 text-[11px] text-teal"
+                        >
+                          重试这一条
+                        </button>
+                      )}
                     </div>
-                    {["failed", "over_budget"].includes(item.status) && (
-                      <button
-                        type="button"
-                        onClick={() => void handleRetry(item.id)}
-                        className="rounded-full bg-sky px-2 py-1 text-[11px] text-teal"
-                      >
-                        重试这一条
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

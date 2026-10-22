@@ -29,6 +29,10 @@ export type BatchItem = {
   output_asset_id: string | null;
   error_code: string;
   error_message: string;
+  stage: string;
+  refined_from: string | null;
+  delta_e: number | null;
+  qa_score: number | null;
 };
 
 export type Batch = {

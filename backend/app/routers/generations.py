@@ -38,6 +38,11 @@ def _job_out(job: models.GenerationJob) -> dict:
         "error_code": job.error_code,
         "error_message": job.error_message,
         "cancel_requested": bool(getattr(job, "cancel_requested", False)),
+        "stage": getattr(job, "stage", "draft") or "draft",
+        "refined_from": getattr(job, "refined_from", None),
+        "delta_e": getattr(job, "delta_e", None),
+        "qa_score": getattr(job, "qa_score", None),
+        "qa_detail": getattr(job, "qa_detail", "") or "",
         "created_at": job.created_at.isoformat() if job.created_at else None,
     }
 
@@ -174,6 +179,91 @@ def cancel_job(job_id: str, db: Session = Depends(get_db)):
         return {"job_id": job.id, "status": job.status, "cancel_requested": True}
 
     raise conflict("任务已结束，无法取消")
+
+
+@router.post("/jobs/{job_id}/refine", status_code=202)
+def refine_job(job_id: str, db: Session = Depends(get_db)):
+    """精修：用草稿图做图生图（约 ¥0.30/张）。不自动重试，失败由用户手动点。"""
+    src = db.get(models.GenerationJob, job_id)
+    if src is None:
+        raise not_found("任务不存在")
+    if src.status != "succeeded" or not src.output_asset_id:
+        raise conflict("只有生成成功的任务才能精修")
+    if (src.stage or "draft") != "draft":
+        raise conflict("精修图不能再精修")
+
+    if not config.edit_configured():
+        raise AppError(503, "EDIT_NOT_CONFIGURED", "未配置精修模型 Key")
+
+    ok, reason = budget.check_budget(config.EDIT_UNIT_PRICE_FEN, 0, config.EDIT_UNIT_PRICE_FEN * 100)
+    if not ok:
+        raise budget_exceeded(reason)
+
+    job = models.GenerationJob(
+        project_id=src.project_id,
+        batch_id=src.batch_id,
+        sku_code=src.sku_code or "",
+        status="queued",
+        stage="refined",
+        refined_from=src.id,
+        product_name=src.product_name,
+        prompt=src.prompt,
+        negative_prompt=src.negative_prompt,
+        source_asset_id=src.output_asset_id,
+        provider=config.EDIT_BASE_URL,
+        model=config.EDIT_MODEL,
+        unit_price_fen=config.EDIT_UNIT_PRICE_FEN,
+        budget_fen=config.EDIT_UNIT_PRICE_FEN * 10,
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    runner.start_job(job.id)
+    return {"job_id": job.id, "status": job.status, "stage": "refined"}
+
+
+@router.post("/jobs/{job_id}/qa")
+def rerun_qa(job_id: str, db: Session = Depends(get_db)):
+    """重跑质检（VLM 一次约 ¥0.003）。"""
+    job = db.get(models.GenerationJob, job_id)
+    if job is None:
+        raise not_found("任务不存在")
+    if job.status != "succeeded" or not job.output_asset_id:
+        raise conflict("只有成功的任务才能质检")
+    if not config.vlm_configured():
+        raise AppError(503, "VLM_NOT_CONFIGURED", "未配置 VLM Key")
+
+    asset = db.get(models.Asset, job.output_asset_id)
+    if asset is None:
+        raise not_found("产物不存在")
+
+    from ..services import color_delta, qa, storage
+
+    out_path = storage.abs_path_for(asset.path)
+
+    # 精修图：把草稿图一并送给 VLM，额外评估颜色一致性
+    ref_bytes = None
+    if (job.stage or "draft") == "refined" and job.refined_from:
+        src_job = db.get(models.GenerationJob, job.refined_from)
+        if src_job and src_job.output_asset_id:
+            src_asset = db.get(models.Asset, src_job.output_asset_id)
+            if src_asset:
+                src_path = storage.abs_path_for(src_asset.path)
+                if src_path.exists():
+                    ref_bytes = src_path.read_bytes()
+
+    result = qa.evaluate(
+        out_path.read_bytes(),
+        product_name=job.product_name or "",
+        reference_bytes=ref_bytes,
+    )
+    if result.get("ok"):
+        job.qa_score = result["total"]
+        job.qa_detail = json.dumps(result, ensure_ascii=False)
+        db.commit()
+        return {"ok": True, "qa_score": job.qa_score, "qa_detail": result}
+    return {"ok": False, "error": result.get("error"), "message": result.get("message")}
 
 
 @router.get("/jobs/{job_id}/events")

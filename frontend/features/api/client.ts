@@ -69,6 +69,20 @@ export function retryJob(jobId: string) {
   );
 }
 
+export function refineJob(jobId: string) {
+  return apiFetch<{ job_id: string; status: string; stage: string }>(
+    `/api/jobs/${jobId}/refine`,
+    { method: "POST" },
+  );
+}
+
+export function rerunQa(jobId: string) {
+  return apiFetch<{ ok: boolean; qa_score?: number; error?: string; message?: string }>(
+    `/api/jobs/${jobId}/qa`,
+    { method: "POST" },
+  );
+}
+
 export function cancelJob(jobId: string) {
   return apiFetch<{ job_id: string; status: string; cancel_requested: boolean }>(
     `/api/jobs/${jobId}/cancel`,

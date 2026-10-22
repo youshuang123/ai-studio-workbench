@@ -28,6 +28,11 @@ _ADDED_COLUMNS = [
     ("generation_jobs", "cancel_requested", "BOOLEAN DEFAULT 0"),
     ("generation_jobs", "batch_id", "VARCHAR(36)"),
     ("generation_jobs", "sku_code", "VARCHAR(40) DEFAULT ''"),
+    ("generation_jobs", "stage", "VARCHAR(16) DEFAULT 'draft'"),
+    ("generation_jobs", "refined_from", "VARCHAR(36)"),
+    ("generation_jobs", "delta_e", "REAL"),
+    ("generation_jobs", "qa_score", "INTEGER"),
+    ("generation_jobs", "qa_detail", "TEXT DEFAULT ''"),
 ]
 
 

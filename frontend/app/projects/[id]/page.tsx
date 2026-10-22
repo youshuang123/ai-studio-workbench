@@ -12,12 +12,19 @@ import {
   createGeneration,
   fetchProject,
   fetchUsage,
+  refineJob,
   retryJob,
 } from "@/features/api/client";
 import type { Asset, ProjectDetail, Usage } from "@/features/api/types";
 import { UploadBox } from "@/features/generation/components/UploadBox";
 import { ResultPanel } from "@/features/generation/components/ResultPanel";
 import { useJobEvents } from "@/features/jobs/useJobEvents";
+import {
+  DeltaBadge,
+  QaBadge,
+  QaDetailList,
+  parseQaDetail,
+} from "@/features/qa/components";
 import { errorMessage } from "@/lib/api/client";
 import { formatFen, formatTime } from "@/lib/utils/format";
 
@@ -74,7 +81,12 @@ export default function ProjectPage() {
   }, [load]);
 
   const [cancelling, setCancelling] = useState(false);
+  const [refineJobId, setRefineJobId] = useState<string | null>(null);
+  const [refining, setRefining] = useState(false);
+  const [refineNotice, setRefineNotice] = useState<string | null>(null);
+
   const { phase, isWorking, stopWaiting } = useJobEvents(jobId, load);
+  const refineEvents = useJobEvents(refineJobId, load);
 
   const uploads = useMemo(
     () => (detail?.assets ?? []).filter((a) => a.kind === "upload"),
@@ -85,9 +97,29 @@ export default function ProjectPage() {
     [detail],
   );
 
+  const refinedDetailRaw = useMemo(() => {
+    const job = detail?.recent_jobs.find(
+      (j) => j.stage === "refined" && j.status === "succeeded" && j.output_asset_id,
+    );
+    return (job as { qa_detail?: string } | undefined)?.qa_detail ?? "";
+  }, [detail]);
+
+  const latestRefined = useMemo(() => {
+    const job = detail?.recent_jobs.find(
+      (j) => j.stage === "refined" && j.status === "succeeded" && j.output_asset_id,
+    );
+    if (!job || !job.output_asset_id) return null;
+    return {
+      assetId: job.output_asset_id,
+      deltaE: job.delta_e ?? null,
+      qaScore: job.qa_score ?? null,
+      jobId: job.id,
+    };
+  }, [detail]);
+
   const latestSuccess = useMemo(() => {
     const job = detail?.recent_jobs.find(
-      (j) => j.status === "succeeded" && j.output_asset_id,
+      (j) => j.status === "succeeded" && j.output_asset_id && (j.stage ?? "draft") !== "refined",
     );
     if (!job || !job.output_asset_id) return null;
     return {
@@ -139,6 +171,28 @@ export default function ProjectPage() {
       setFormError(errorMessage(err));
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function handleRefine() {
+    const latest = latestSuccess;
+    if (!latest || refining) return;
+    // 找到对应的 job id
+    const job = detail?.recent_jobs.find(
+      (j) => j.status === "succeeded" && j.output_asset_id === latest.assetId,
+    );
+    if (!job) return;
+    setRefining(true);
+    setFormError(null);
+    setRefineNotice(null);
+    try {
+      const resp = await refineJob(job.id);
+      setRefineJobId(resp.job_id);
+      setRefineNotice("精修中，约 27 秒。完成后会显示对比和质检分。");
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setRefining(false);
     }
   }
 
@@ -352,6 +406,80 @@ export default function ProjectPage() {
             onRefresh={() => void load()}
             fallback={latestSuccess}
           />
+
+          {/* 精修：只对成功的草稿开放 */}
+          {latestSuccess && phase.kind !== "cancelled" && (
+            <div className="flex flex-col gap-3 border-t border-hairline pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <Eyebrow>精修（图生图）</Eyebrow>
+                  <p className="text-[12px] leading-relaxed text-helper">
+                    草稿只按文字描述画，可能不像你的商品。精修会参考这张图重绘，保留形状和颜色，约 ¥0.30/张。
+                  </p>
+                </div>
+                <Button
+                  variant="quiet"
+                  onClick={handleRefine}
+                  loading={refining || refineEvents.isWorking}
+                  disabled={refining || refineEvents.isWorking}
+                >
+                  {refineEvents.isWorking ? "精修中…" : "精修成主图（≈¥0.30）"}
+                </Button>
+              </div>
+
+              {refineNotice && (
+                <p className="text-[12px] text-teal" role="status">
+                  {refineNotice}
+                </p>
+              )}
+              {refineEvents.phase.kind === "error" && (
+                <p className="text-[12px] text-[#8c2b25]">
+                  精修失败：{refineEvents.phase.error.message}
+                </p>
+              )}
+
+              {latestRefined && (
+                <div className="flex flex-col gap-3 rounded-[20px] bg-sky/30 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DeltaBadge deltaE={latestRefined.deltaE} />
+                    <QaBadge
+                      score={latestRefined.qaScore}
+                      max={parseQaDetail(refinedDetailRaw)?.max_total ?? 12}
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <figure className="flex flex-col gap-1.5">
+                      <img
+                        src={`/api/assets/${latestSuccess.assetId}/file`}
+                        alt="草稿"
+                        className="w-full rounded-[14px] border border-hairline bg-canvas"
+                      />
+                      <figcaption className="text-center text-[11px] text-helper">
+                        草稿（¥0.03）
+                      </figcaption>
+                    </figure>
+                    <figure className="flex flex-col gap-1.5">
+                      <img
+                        src={`/api/assets/${latestRefined.assetId}/file`}
+                        alt="精修"
+                        className="w-full rounded-[14px] border border-ink/20 bg-canvas"
+                      />
+                      <figcaption className="text-center text-[11px] text-ink">
+                        精修（¥0.30）
+                      </figcaption>
+                    </figure>
+                  </div>
+                  <QaDetailList detail={parseQaDetail(refinedDetailRaw)} />
+                  <a
+                    href={`/api/assets/${latestRefined.assetId}/download`}
+                    className="w-fit rounded-[28px] border border-ink px-4 py-2 text-[13px] font-medium text-ink hover:bg-ink hover:text-canvas"
+                  >
+                    下载精修图
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </div>
 

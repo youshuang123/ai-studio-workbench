@@ -29,6 +29,10 @@ export type JobBrief = {
   error_code: string;
   error_message: string;
   created_at: string | null;
+  stage?: string;
+  refined_from?: string | null;
+  delta_e?: number | null;
+  qa_score?: number | null;
 };
 
 export type ProjectDetail = {
@@ -52,6 +56,11 @@ export type GenerationJob = {
   error_code: string;
   error_message: string;
   cancel_requested?: boolean;
+  stage?: string;
+  refined_from?: string | null;
+  delta_e?: number | null;
+  qa_score?: number | null;
+  qa_detail?: string;
   created_at: string | null;
 };
 

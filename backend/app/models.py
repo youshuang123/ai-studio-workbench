@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -72,6 +72,13 @@ class GenerationJob(Base):
 
     # 批量任务归属（2-2）；单条生成为空
     batch_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+
+    # ── 2-3：两段式与质检 ──
+    stage: Mapped[str] = mapped_column(String(16), default="draft")  # draft | refined
+    refined_from: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    delta_e: Mapped[float | None] = mapped_column(Float, nullable=True)
+    qa_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    qa_detail: Mapped[str] = mapped_column(Text, default="")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

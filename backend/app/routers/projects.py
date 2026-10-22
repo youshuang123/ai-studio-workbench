@@ -45,6 +45,11 @@ def _job_brief(job: models.GenerationJob) -> dict:
         "elapsed_ms": elapsed_ms,
         "error_code": job.error_code,
         "error_message": job.error_message,
+        "stage": getattr(job, "stage", "draft") or "draft",
+        "refined_from": getattr(job, "refined_from", None),
+        "delta_e": getattr(job, "delta_e", None),
+        "qa_score": getattr(job, "qa_score", None),
+        "qa_detail": getattr(job, "qa_detail", "") or "",
         "created_at": _iso(job.created_at),
     }
 
@@ -106,7 +111,7 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
         db.query(models.GenerationJob)
         .filter(models.GenerationJob.project_id == project_id)
         .order_by(models.GenerationJob.created_at.desc())
-        .limit(10)
+        .limit(20)
         .all()
     )
     return {

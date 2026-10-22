@@ -58,6 +58,13 @@ export function retryItem(batchId: string, itemId: string) {
   );
 }
 
+export function refineItems(batchId: string, itemIds: string[]) {
+  return apiFetch<{ created: number; job_ids: string[]; estimated_cost_fen: number }>(
+    `/api/batches/${batchId}/refine`,
+    { method: "POST", body: JSON.stringify({ item_ids: itemIds }) },
+  );
+}
+
 export const exportUrl = (batchId: string) => `/api/batches/${batchId}/export`;
 
 /** 批次 SSE；done 之后调用 onDone。 */

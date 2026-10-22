@@ -80,6 +80,20 @@ CSV 表头固定：`sku_code, product_name, category, color, selling_points, ima
 
 配置：`BATCH_CONCURRENCY`（默认 3）、`BATCH_BUDGET_CNY`（默认 10）、`BATCH_MAX_ROWS`（默认 200）
 
+## 精修与质检（阶段 2-3）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/jobs/{id}/refine` | 精修（图生图，≈¥0.30/张）；草稿必须已成功 |
+| POST | `/api/jobs/{id}/qa` | 重跑质检（VLM，≈¥0.003） |
+| POST | `/api/batches/{id}/refine` | 批量精修（`{"item_ids":[...]}`，≤20 条，受 ¥5 预算约束） |
+
+- 精修 job 通过 `stage=refined` + `refined_from` 关联草稿，**草稿永远保留**
+- 精修成功后自动质检：`delta_e`（主色差，仅供参考）+ `qa_score` / `qa_detail`（VLM 五维）
+- 五维：符合描述 / 无文字水印 / 商品完整 / 背景干净 / **颜色一致（传草稿图做双图对比）**
+- 判定按平均分：≥2.5 pass、≥1.8 warn、否则 fail
+- 配置：`MODEL_EDIT_*`、`MODEL_VLM_*`、`DELTA_E_THRESHOLD`、`BATCH_REFINE_BUDGET_CNY`
+
 ## 数据与状态
 
 - 数据库：`backend/data/app.db`（SQLite，首次启动自动建表）
