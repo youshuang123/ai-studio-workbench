@@ -13,6 +13,13 @@ describe("mapJobStatus", () => {
     expect(mapJobStatus("disconnected")).toBe("disconnected");
   });
 
+  it("批次状态也能映射（2-2）", () => {
+    expect(mapJobStatus("draft")).toBe("waiting");
+    expect(mapJobStatus("completed")).toBe("success");
+    expect(mapJobStatus("paused")).toBe("waiting");
+    expect(mapJobStatus("stopped_over_budget")).toBe("blocked");
+  });
+
   it("未知状态走 stale，不当成成功也不当成失败", () => {
     expect(mapJobStatus("something_new")).toBe("stale");
     expect(mapJobStatus(null)).toBe("stale");
@@ -22,7 +29,7 @@ describe("mapJobStatus", () => {
 
 describe("jobStateLabel", () => {
   it("每个状态都有中文文案", () => {
-    expect(jobStateLabel("waiting")).toBe("排队中");
+    expect(jobStateLabel("waiting")).toBe("待处理");
     expect(jobStateLabel("generating")).toBe("生成中");
     expect(jobStateLabel("success")).toBe("已完成");
     expect(jobStateLabel("error")).toBe("失败");

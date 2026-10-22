@@ -26,6 +26,8 @@ def get_db():
 # 轻量迁移表：只做「加列」这类安全操作，避免为了一个字段引入 Alembic
 _ADDED_COLUMNS = [
     ("generation_jobs", "cancel_requested", "BOOLEAN DEFAULT 0"),
+    ("generation_jobs", "batch_id", "VARCHAR(36)"),
+    ("generation_jobs", "sku_code", "VARCHAR(40) DEFAULT ''"),
 ]
 
 

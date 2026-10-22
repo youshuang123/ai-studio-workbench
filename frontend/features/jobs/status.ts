@@ -18,6 +18,13 @@ export type JobState =
   | "stale";
 
 const MAP: Record<string, JobState> = {
+  // ── 批次（2-2）──
+  draft: "waiting",
+  paused: "waiting",
+  completed: "success",
+  stopped_over_budget: "blocked",
+  skipped: "cancelled",
+  // ── 单任务 ──
   queued: "waiting",
   running: "generating",
   succeeded: "success",
@@ -36,7 +43,7 @@ export function mapJobStatus(status: string | null | undefined): JobState {
 export function jobStateLabel(state: JobState): string {
   switch (state) {
     case "waiting":
-      return "排队中";
+      return "待处理";
     case "generating":
       return "生成中";
     case "success":

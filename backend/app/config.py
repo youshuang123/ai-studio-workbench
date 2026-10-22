@@ -43,6 +43,11 @@ LLM_MODEL = os.getenv("MODEL_LLM_NAME", "deepseek-chat").strip()
 # ── 预算守卫 ──
 TASK_BUDGET_FEN = _int_yuan_to_fen("TASK_BUDGET_CNY", "5.00")
 
+# ── 批量（2-2）──
+BATCH_CONCURRENCY = int(os.getenv("BATCH_CONCURRENCY", "3"))
+BATCH_BUDGET_FEN = _int_yuan_to_fen("BATCH_BUDGET_CNY", "10.00")
+BATCH_MAX_ROWS = int(os.getenv("BATCH_MAX_ROWS", "200"))
+
 # ── 上传限制 ──
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 MAX_IMAGE_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "8000"))

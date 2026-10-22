@@ -59,6 +59,27 @@ MODEL_API_KEY="" ./.venv/bin/python -m pytest -q     # 41 条 mock 测试，离�
 
 错误结构统一为 `{"error": {"code": "...", "message": "..."}}`，不返回堆栈。
 
+## 批量（阶段 2-2）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/projects/{id}/batches/validate` | 上传 CSV 只校验，返回逐行错误 |
+| POST | `/api/projects/{id}/batches` | 校验并建批次（draft） |
+| GET | `/api/projects/{id}/batches` | 最近 5 个批次（刷新后恢复用） |
+| GET | `/api/batches/{id}` | 批次详情（含所有行） |
+| POST | `/api/batches/{id}/trial` | 试跑第一条（同步等结果） |
+| POST | `/api/batches/{id}/confirm` | 确认批量（必须先成功试跑） |
+| POST | `/api/batches/{id}/resume` | 续跑（只跑未完成的） |
+| POST | `/api/batches/{id}/cancel` | 停止，保留已完成 |
+| POST | `/api/batches/{id}/items/{item_id}/retry` | 单条重试 |
+| GET | `/api/batches/{id}/events` | **SSE**：progress / item / done / error |
+| GET | `/api/batches/{id}/export` | 导出 ZIP（图片 + 清单 + 账单） |
+
+CSV 表头固定：`sku_code, product_name, category, color, selling_points, image_file`
+示例：`backend/examples/skus.csv`（20 行）
+
+配置：`BATCH_CONCURRENCY`（默认 3）、`BATCH_BUDGET_CNY`（默认 10）、`BATCH_MAX_ROWS`（默认 200）
+
 ## 数据与状态
 
 - 数据库：`backend/data/app.db`（SQLite，首次启动自动建表）

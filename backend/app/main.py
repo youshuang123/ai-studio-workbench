@@ -8,8 +8,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import config
 from .db import init_db
 from .errors import AppError
-from .routers import assets, generations, projects
-from .services import runner
+from .routers import assets, batches, generations, projects
+from .services import batch_runner, runner
 
 
 @asynccontextmanager
@@ -19,6 +19,9 @@ async def lifespan(app: FastAPI):
     if interrupted:
         # 只打数量，不打任务内容
         print(f"[startup] 已把 {interrupted} 个中断任务标记为可重试")
+    paused = batch_runner.mark_interrupted_batches()
+    if paused:
+        print(f"[startup] 已把 {paused} 个运行中的批次转为 paused，可续跑")
     yield
 
 
@@ -61,6 +64,7 @@ async def unhandled_exc_handler(request: Request, exc: Exception):
 app.include_router(projects.router)
 app.include_router(assets.router)
 app.include_router(generations.router)
+app.include_router(batches.router)
 
 
 @app.get("/api/health")

@@ -51,6 +51,7 @@ class GenerationJob(Base):
     status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
 
     product_name: Mapped[str] = mapped_column(String(50), default="")
+    sku_code: Mapped[str] = mapped_column(String(40), default="")
     prompt: Mapped[str] = mapped_column(Text, default="")
     negative_prompt: Mapped[str] = mapped_column(Text, default="")
     source_asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
@@ -68,6 +69,34 @@ class GenerationJob(Base):
 
     # 用户点了「取消任务」，执行器在下一个检查点停止（无法中断已发出的 HTTP 请求）
     cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # 批量任务归属（2-2）；单条生成为空
+    batch_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class Batch(Base):
+    """批量批次（2-2）。每行对应一个 GenerationJob，通过 batch_id 关联。"""
+
+    __tablename__ = "batches"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120), default="")
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    succeeded: Mapped[int] = mapped_column(Integer, default=0)
+    failed: Mapped[int] = mapped_column(Integer, default=0)
+
+    cost_fen: Mapped[int] = mapped_column(Integer, default=0)
+    budget_fen: Mapped[int] = mapped_column(Integer, default=0)
+
+    # 用户确认前不允许批量（D8 人工确认）
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

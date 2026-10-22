@@ -204,7 +204,13 @@ export default function ProjectPage() {
               创建于 {formatTime(detail.created_at)} · {detail.assets.length} 个素材
             </p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex items-end gap-6">
+            <Link
+              href={`/projects/${projectId}/batch`}
+              className="rounded-[28px] border border-ink px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-ink hover:text-canvas"
+            >
+              SKU 批量生成
+            </Link>
             <div>
               <Eyebrow>累计成本</Eyebrow>
               <p className="mt-1 text-[22px] font-medium tracking-[-0.02em] text-ink">
@@ -420,7 +426,7 @@ export default function ProjectPage() {
       )}
 
       <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-hairline pt-6 text-[12px] text-helper">
-        <span>阶段 2-1 · 单张主图端到端</span>
+        <span>阶段 2-2 · 单张主图端到端</span>
         <Link href="/" className="text-teal hover:underline">
           返回列表
         </Link>

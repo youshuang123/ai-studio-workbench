@@ -167,7 +167,7 @@ export default function HomePage() {
       </section>
 
       <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-hairline pt-6 text-[12px] text-helper">
-        <span>阶段 2-1 · 电商线最小闭环</span>
+        <span>阶段 2-2 · 电商线（单张 + 批量）</span>
         <span>版本 {health?.version ?? "—"}</span>
         {health && (
           <span>

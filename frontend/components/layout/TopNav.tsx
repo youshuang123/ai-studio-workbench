@@ -17,9 +17,9 @@ export function TopNav() {
 
         <span className="hidden items-center gap-2 rounded-full bg-sky px-3 py-1.5 text-[12px] text-teal sm:flex">
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
-            阶段 2-1
+            阶段 2-2
           </span>
-          <span className="text-ink">单张主图端到端</span>
+          <span className="text-ink">单张 + SKU 批量</span>
         </span>
 
         <Link
