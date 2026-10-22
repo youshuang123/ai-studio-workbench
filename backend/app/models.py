@@ -110,6 +110,66 @@ class Batch(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class Drama(Base):
+    """短剧（2-4）。一个项目下可以有多个短剧。"""
+
+    __tablename__ = "dramas"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    title: Mapped[str] = mapped_column(String(120), default="")
+    script_text: Mapped[str] = mapped_column(Text, default="")
+    style: Mapped[str] = mapped_column(String(40), default="都市")
+    status: Mapped[str] = mapped_column(String(24), default="draft")
+    video_path: Mapped[str] = mapped_column(String(500), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
+
+
+class DramaScene(Base):
+    __tablename__ = "drama_scenes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    drama_id: Mapped[str] = mapped_column(ForeignKey("dramas.id"), index=True)
+    index: Mapped[int] = mapped_column(Integer, default=0)
+    title: Mapped[str] = mapped_column(String(120), default="")
+    location: Mapped[str] = mapped_column(String(120), default="")
+    time_of_day: Mapped[str] = mapped_column(String(40), default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+
+
+class DramaShot(Base):
+    __tablename__ = "drama_shots"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    drama_id: Mapped[str] = mapped_column(ForeignKey("dramas.id"), index=True)
+    scene_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    index: Mapped[int] = mapped_column(Integer, default=0)
+    shot_size: Mapped[str] = mapped_column(String(20), default="中景")
+    camera: Mapped[str] = mapped_column(String(20), default="平视")
+    action: Mapped[str] = mapped_column(Text, default="")
+    dialogue: Mapped[str] = mapped_column(Text, default="")
+    duration_sec: Mapped[float] = mapped_column(Float, default=3.0)
+    continuity: Mapped[str] = mapped_column(Text, default="")
+    mood: Mapped[str] = mapped_column(String(40), default="")
+    character_ids: Mapped[str] = mapped_column(Text, default="[]")  # JSON 数组字符串
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class DramaCharacter(Base):
+    __tablename__ = "drama_characters"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    drama_id: Mapped[str] = mapped_column(ForeignKey("dramas.id"), index=True)
+    name: Mapped[str] = mapped_column(String(40), default="")
+    appearance: Mapped[str] = mapped_column(Text, default="")
+    costume: Mapped[str] = mapped_column(Text, default="")
+    personality: Mapped[str] = mapped_column(Text, default="")
+    ref_asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 class PriceRule(Base):
     __tablename__ = "price_rules"
 

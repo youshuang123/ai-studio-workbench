@@ -9,7 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import config
 from .db import init_db
 from .errors import AppError
-from .routers import assets, batches, generations, projects
+from .routers import assets, batches, dramas, generations, projects
 from .services import batch_runner, runner
 
 
@@ -66,6 +66,7 @@ app.include_router(projects.router)
 app.include_router(assets.router)
 app.include_router(generations.router)
 app.include_router(batches.router)
+app.include_router(dramas.router)
 
 # 本地静态产物（视频切片预览等），仅本机调试用
 _STATIC_DIR = config.BACKEND_DIR / "static"

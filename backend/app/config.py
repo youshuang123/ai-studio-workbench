@@ -36,9 +36,11 @@ T2I_UNIT_PRICE_FEN = _int_yuan_to_fen("MODEL_T2I_UNIT_PRICE", "0.03")
 T2I_TIMEOUT_SECONDS = int(os.getenv("MODEL_T2I_TIMEOUT", "60"))
 
 # ── LLM（可选，本阶段未启用）──
-LLM_BASE_URL = os.getenv("MODEL_LLM_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
-LLM_API_KEY = os.getenv("MODEL_LLM_API_KEY", "").strip()
-LLM_MODEL = os.getenv("MODEL_LLM_NAME", "deepseek-chat").strip()
+LLM_BASE_URL = (os.getenv("MODEL_LLM_BASE_URL", "").strip() or T2I_BASE_URL).rstrip("/")
+LLM_API_KEY = (os.getenv("MODEL_LLM_API_KEY", "").strip() or T2I_API_KEY)
+LLM_MODEL = os.getenv("MODEL_LLM_NAME", "deepseek-ai/DeepSeek-V4-Flash").strip()
+LLM_UNIT_PRICE_FEN = _int_yuan_to_fen("MODEL_LLM_UNIT_PRICE", "0.02")
+LLM_TIMEOUT_SECONDS = int(os.getenv("MODEL_LLM_TIMEOUT", "120"))
 
 # ── 预算守卫 ──
 TASK_BUDGET_FEN = _int_yuan_to_fen("TASK_BUDGET_CNY", "5.00")
@@ -60,6 +62,11 @@ VLM_TIMEOUT_SECONDS = int(os.getenv("MODEL_VLM_TIMEOUT", "60"))
 DELTA_E_THRESHOLD = float(os.getenv("DELTA_E_THRESHOLD", "3.0"))
 BATCH_REFINE_LIMIT = int(os.getenv("BATCH_REFINE_LIMIT", "20"))
 BATCH_REFINE_BUDGET_FEN = _int_yuan_to_fen("BATCH_REFINE_BUDGET_CNY", "5.00")
+
+# ── 短剧（2-4）──
+DRAMA_MAX_SHOTS = int(os.getenv("DRAMA_MAX_SHOTS", "40"))
+COMPOSE_FPS = int(os.getenv("COMPOSE_FPS", "25"))
+COMPOSE_MAX_SECONDS = int(os.getenv("COMPOSE_MAX_SECONDS", "180"))
 
 # ── 批量（2-2）──
 BATCH_CONCURRENCY = int(os.getenv("BATCH_CONCURRENCY", "3"))
@@ -90,3 +97,7 @@ def edit_configured() -> bool:
 
 def vlm_configured() -> bool:
     return bool(VLM_API_KEY)
+
+
+def llm_configured() -> bool:
+    return bool(LLM_API_KEY)

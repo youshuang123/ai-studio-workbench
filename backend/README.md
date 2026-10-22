@@ -94,6 +94,28 @@ CSV 表头固定：`sku_code, product_name, category, color, selling_points, ima
 - 判定按平均分：≥2.5 pass、≥1.8 warn、否则 fail
 - 配置：`MODEL_EDIT_*`、`MODEL_VLM_*`、`DELTA_E_THRESHOLD`、`BATCH_REFINE_BUDGET_CNY`
 
+## 短剧线（阶段 2-4）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/projects/{id}/dramas` | 创建短剧（标题 + 剧本 + 风格） |
+| GET | `/api/projects/{id}/dramas` | 短剧列表 |
+| GET | `/api/dramas/{id}` | 详情（场次 / 镜头 / 角色 / 关键帧状态） |
+| POST | `/api/dramas/{id}/storyboard` | LLM 生成分镜表（`{"append":true}` 追加） |
+| PATCH | `/api/dramas/{id}/shots/{shot_id}` | 编辑镜头（改内容会清空该镜头旧关键帧） |
+| POST | `/api/dramas/{id}/shots` | 新增镜头 |
+| DELETE | `/api/dramas/{id}/shots/{shot_id}` | 删除并重排 |
+| POST | `/api/dramas/{id}/shots/reorder` | 重排（`{"shot_ids":[...]}`） |
+| POST | `/api/dramas/{id}/characters` | 新增角色 |
+| POST | `/api/dramas/{id}/characters/{cid}/ref` | 生成角色参考图（¥0.03） |
+| POST | `/api/dramas/{id}/keyframes` | 批量生成缺失的关键帧（¥0.03/张） |
+| POST | `/api/dramas/{id}/shots/{sid}/keyframe` | 单镜头重生成 |
+| POST | `/api/dramas/{id}/compose` | 合成轻动效 MP4（FFmpeg，¥0） |
+| GET | `/api/dramas/{id}/video` | 下载成片 |
+| GET | `/api/dramas/{id}/export` | 导出 ZIP（分镜 CSV + 关键帧 + 成片） |
+
+要点：**镜头只存 `job_id`**，关键帧的生成/精修/质检/成本全部复用生成通道。
+
 ## 数据与状态
 
 - 数据库：`backend/data/app.db`（SQLite，首次启动自动建表）

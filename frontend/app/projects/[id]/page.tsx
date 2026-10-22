@@ -263,7 +263,13 @@ export default function ProjectPage() {
               href={`/projects/${projectId}/batch`}
               className="rounded-[28px] border border-ink px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-ink hover:text-canvas"
             >
-              SKU 批量生成
+              SKU 批量
+            </Link>
+            <Link
+              href={`/projects/${projectId}/dramas`}
+              className="rounded-[28px] border border-ink px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-ink hover:text-canvas"
+            >
+              短剧
             </Link>
             <div>
               <Eyebrow>累计成本</Eyebrow>
