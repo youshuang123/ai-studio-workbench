@@ -1,4 +1,4 @@
-verify.sh 自检  2026-10-23 00:27:39  目录：/Users/youshuang/Documents/project/项目1
+verify.sh 自检  2026-10-23 00:49:11  目录：/Users/youshuang/Documents/project/项目1
 
 ================ 1. mock 自动化测试 ================
 .........................................                                [100%]
@@ -8,7 +8,7 @@ verify.sh 自检  2026-10-23 00:27:39  目录：/Users/youshuang/Documents/proje
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-41 passed, 1 warning in 0.42s
+41 passed, 1 warning in 0.44s
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - `__dirname` (vitest.config.mts:14:25). Use `import.meta.dirname` instead
 Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
@@ -18,8 +18,8 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 
  Test Files  4 passed (4)
       Tests  19 passed (19)
-   Start at  00:27:40
-   Duration  591ms (environment 83%, setup 10%, tests 4%, import 2%, transform 1%)
+   Start at  00:49:12
+   Duration  706ms (environment 85%, setup 9%, tests 3%, import 2%, transform 1%)
 
 结果：通过（41/41）；前端测试通过
 
@@ -27,11 +27,12 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 通过：没有 .env 文件被 git 跟踪。
 通过：会进仓库的文件中未发现密钥样式字符串。
 通过：构建产物 frontend/.next 未发现密钥样式字符串。
+通过：backend/.env 中 MODEL_T2I_API_KEY 的值未出现在任何跟踪文件或构建产物中。
 结果：通过
 
 ================ 3. 数据重启恢复（调用 scripts/restart-check.sh） ================
 第一次启动：服务已就绪
-第一次启动：已写入项目 id=d380fb00-e2e3-45bb-ab66-e537cd9b5d4b 资产 id=3bc50bf8-9a08-43ab-ae1b-b5929c2dcd31
+第一次启动：已写入项目 id=d7c997fd-93f0-443f-a025-3068028d2e51 资产 id=1ed14a69-50de-4421-927e-2829ccf59ec7
 服务已停止。
 第二次启动：读回同一条项目记录，资产文件可访问（HTTP 200）。重启恢复通过。
 结果：通过
@@ -46,15 +47,15 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 > next build
 
 ▲ Next.js 16.4.2 (Turbopack)
-✓ Running next.config.ts took 40ms
+✓ Running next.config.ts took 10ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 134ms
+✓ Compiled successfully in 233ms
   Running TypeScript ...
-  Finished TypeScript in 526ms ...
+  Finished TypeScript in 505ms ...
   Collecting page data using 5 workers ...
   Generating static pages using 5 workers (0/3) ...
-✓ Generating static pages using 5 workers (3/3) in 171ms
+✓ Generating static pages using 5 workers (3/3) in 181ms
   Finalizing page optimization ...
 
 Route (app)

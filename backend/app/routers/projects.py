@@ -33,12 +33,16 @@ def _asset_out(asset: models.Asset) -> dict:
 
 
 def _job_brief(job: models.GenerationJob) -> dict:
+    elapsed_ms = None
+    if job.started_at and job.finished_at:
+        elapsed_ms = int((job.finished_at - job.started_at).total_seconds() * 1000)
     return {
         "id": job.id,
         "status": job.status,
         "product_name": job.product_name,
         "output_asset_id": job.output_asset_id,
         "cost_fen": job.cost_fen,
+        "elapsed_ms": elapsed_ms,
         "error_code": job.error_code,
         "error_message": job.error_message,
         "created_at": _iso(job.created_at),

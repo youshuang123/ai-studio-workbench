@@ -83,6 +83,18 @@ export default function ProjectPage() {
     () => (detail?.assets ?? []).filter((a) => a.kind === "output"),
     [detail],
   );
+  const latestSuccess = useMemo(() => {
+    const job = detail?.recent_jobs.find(
+      (j) => j.status === "succeeded" && j.output_asset_id,
+    );
+    if (!job || !job.output_asset_id) return null;
+    return {
+      assetId: job.output_asset_id,
+      costFen: job.cost_fen,
+      elapsedMs: job.elapsed_ms ?? null,
+    };
+  }, [detail]);
+
   const currentSource: Asset | null = useMemo(
     () => uploads.find((a) => a.id === sourceAssetId) ?? uploads[0] ?? null,
     [uploads, sourceAssetId],
@@ -281,6 +293,7 @@ export default function ProjectPage() {
             isWorking={isWorking}
             onRetry={handleRetry}
             retrying={retrying}
+            fallback={latestSuccess}
           />
         </Card>
       </div>

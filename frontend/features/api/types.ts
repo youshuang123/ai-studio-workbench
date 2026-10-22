@@ -25,6 +25,7 @@ export type JobBrief = {
   product_name: string;
   output_asset_id: string | null;
   cost_fen: number;
+  elapsed_ms?: number | null;
   error_code: string;
   error_message: string;
   created_at: string | null;

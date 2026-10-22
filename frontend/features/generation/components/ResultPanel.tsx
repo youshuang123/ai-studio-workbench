@@ -10,6 +10,12 @@ const STAGE_TEXT: Record<string, string> = {
   calling: "正在调用模型…",
 };
 
+export type FallbackResult = {
+  assetId: string;
+  costFen: number;
+  elapsedMs: number | null;
+};
+
 export function ResultPanel({
   stage,
   done,
@@ -17,6 +23,7 @@ export function ResultPanel({
   isWorking,
   onRetry,
   retrying,
+  fallback = null,
 }: {
   stage: JobStage;
   done: JobDoneEvent | null;
@@ -24,30 +31,46 @@ export function ResultPanel({
   isWorking: boolean;
   onRetry: () => void;
   retrying: boolean;
+  fallback?: FallbackResult | null;
 }) {
-  if (done) {
+  // 刷新后 done 会丢；用后端最近一次成功任务兜底，避免"刚生成的图刷新就没了"
+  const shown = done
+    ? { assetId: done.asset_id, costFen: done.cost_fen, elapsedMs: done.elapsed_ms, isLatest: true }
+    : fallback
+      ? {
+          assetId: fallback.assetId,
+          costFen: fallback.costFen,
+          elapsedMs: fallback.elapsedMs,
+          isLatest: false,
+        }
+      : null;
+
+  if (shown) {
     return (
       <div className="flex flex-col gap-4">
         <div className="overflow-hidden rounded-xl border border-line bg-surface">
           <img
-            src={`/api/assets/${done.asset_id}/file`}
+            src={`/api/assets/${shown.assetId}/file`}
             alt="生成的主图"
             className="mx-auto block max-h-[520px] w-full object-contain"
           />
         </div>
+        {!shown.isLatest && (
+          <p className="text-xs text-smoke">下面是最近一次生成的结果（刷新页面后仍会显示）</p>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <dl className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-smoke">
             <div className="flex gap-1">
               <dt>成本</dt>
-              <dd className="font-medium text-ink">{formatFen(done.cost_fen)}</dd>
+              <dd className="font-medium text-ink">{formatFen(shown.costFen)}</dd>
             </div>
             <div className="flex gap-1">
               <dt>耗时</dt>
-              <dd className="font-medium text-ink">{formatDuration(done.elapsed_ms)}</dd>
+              <dd className="font-medium text-ink">{formatDuration(shown.elapsedMs)}</dd>
             </div>
           </dl>
           <a
-            href={`/api/assets/${done.asset_id}/download`}
+            href={`/api/assets/${shown.assetId}/download`}
             className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             下载原图

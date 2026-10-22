@@ -31,7 +31,7 @@ DATABASE_URL = os.getenv("DATABASE_URL") or f"sqlite:///{DATA_DIR / 'app.db'}"
 # ── 文生图 ──
 T2I_BASE_URL = os.getenv("MODEL_T2I_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/")
 T2I_API_KEY = os.getenv("MODEL_T2I_API_KEY", "").strip()
-T2I_MODEL = os.getenv("MODEL_T2I_NAME", "black-forest-labs/FLUX.1-schnell").strip()
+T2I_MODEL = os.getenv("MODEL_T2I_NAME", "Tongyi-MAI/Z-Image-Turbo").strip()
 T2I_UNIT_PRICE_FEN = _int_yuan_to_fen("MODEL_T2I_UNIT_PRICE", "0.03")
 T2I_TIMEOUT_SECONDS = int(os.getenv("MODEL_T2I_TIMEOUT", "60"))
 
