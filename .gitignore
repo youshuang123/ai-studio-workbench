@@ -12,3 +12,6 @@ data/
 frontend/.env.local
 frontend/.next/
 frontend/node_modules/
+
+# 运行时日志
+.logs/
